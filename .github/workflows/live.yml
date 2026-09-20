@@ -1,58 +1,43 @@
-name: Live API capture
+name: Live TypeSafe Verification
 
 on:
-  schedule:
-    - cron: '17 6 * * *'
   workflow_dispatch:
 
 permissions:
   contents: read
 
-concurrency:
-  group: typesafe-live-capture
-  cancel-in-progress: false
-
 jobs:
-  capture:
-    if: vars.TYPESAFE_LIVE_ENABLED == 'true'
-    runs-on: ubuntu-24.04
-    timeout-minutes: 15
+  live:
+    runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout SystemOneSDK
+        uses: actions/checkout@v4
+
+      - name: Checkout TypeSafeAPISDK
+        uses: actions/checkout@v4
         with:
-          persist-credentials: false
-      - name: Check explicit API credential
-        id: key
-        env:
-          TYPESAFE_API_KEY: ${{ secrets.TYPESAFE_API_KEY }}
+          repository: nshkrdotcom/typesafe_api_sdk
+          path: .tooling/typesafe_api_sdk
+
+      - name: Set up BEAM
+        uses: erlef/setup-beam@v1
+        with:
+          elixir-version: '1.20.4'
+          otp-version: '29.0'
+
+      - name: Configure local provider dependency
+        shell: bash
         run: |
-          if [ -n "$TYPESAFE_API_KEY" ]; then
-            echo "present=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "present=false" >> "$GITHUB_OUTPUT"
-            echo "::notice::Live capture skipped: TYPESAFE_API_KEY is not configured."
-          fi
-      - uses: ./.github/actions/setup
-        if: steps.key.outputs.present == 'true'
-        with:
-          elixir: '1.19.5'
-          otp: '28.3.1'
-      - name: Record synthetic-input live responses and diffs
-        if: steps.key.outputs.present == 'true'
+          echo "TYPESAFE_API_SDK_PATH=$GITHUB_WORKSPACE/.tooling/typesafe_api_sdk" >> "$GITHUB_ENV"
+          echo "MIX_WORKSPACE_OPS_BOOTSTRAP=$GITHUB_WORKSPACE/scripts/local_workspace.exs" >> "$GITHUB_ENV"
+
+      - name: Fetch dependencies
+        run: mix deps.get
+
+      - name: Run live tests
         env:
           TYPESAFE_API_KEY: ${{ secrets.TYPESAFE_API_KEY }}
           TYPESAFE_BASE_URL: ${{ vars.TYPESAFE_BASE_URL }}
           TYPESAFE_DEFAULT_MODEL: ${{ vars.TYPESAFE_DEFAULT_MODEL }}
-        run: |
-          # Unset absent optional repository variables so executable strict-blank
-          # handling still catches genuinely supplied blank values outside CI.
-          [ -n "$TYPESAFE_BASE_URL" ] || unset TYPESAFE_BASE_URL
-          [ -n "$TYPESAFE_DEFAULT_MODEL" ] || unset TYPESAFE_DEFAULT_MODEL
-          mix typesafe.record --output tmp/live --baseline test/fixtures/live
-      - uses: actions/upload-artifact@v4
-        if: always() && steps.key.outputs.present == 'true'
-        with:
-          name: typesafe-live-capture
-          path: tmp/live/
-          if-no-files-found: warn
-          retention-days: 14
+        run: mix test --include live

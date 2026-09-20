@@ -126,7 +126,7 @@ successful network response cannot force every error/race/future condition.
 | Legacy model listing + `system_one` wire surface | `live_evaluation.exs` | `guides/system-one-and-questions.md` |
 | Strict Noul/Choice/Score constructors and local validation | `live_semantic.exs` | `test/system_one_sdk/semantic_questions_test.exs`, `guides/semantic-questions.md` |
 | Prepared validation/reuse and caller atom/string restoration | `live_semantic.exs` | `test/system_one_sdk/semantic_response_test.exs` |
-| Prepared composition, source order, right-biased merge, immutable reuse | `live_composition_contracts.exs` | `test/system_one_sdk/prepared_v030_test.exs`, `guides/migration-0.3.md` |
+| Prepared composition, source order, right-biased merge, immutable reuse | `live_composition_contracts.exs` | `test/system_one_sdk/prepared_v030_test.exs`, historical migration notes |
 | Stable Prepared fingerprints + response/error propagation | `live_composition_contracts.exs` | `test/system_one_sdk/metadata_v030_test.exs` |
 | Enriched Noul/Choice/Score answers; ranking/margin/expected/modal/normalized helpers; explicit gates | `live_semantic.exs`, `live_decision_patterns.exs` | `guides/answers-and-confidence.md`, `guides/confidence-routing.md` |
 | `Response.fetch/filter`, `Response.values`, stable `Response.metadata` | `live_semantic.exs`, `live_composition_contracts.exs`, `live_otp_server.exs` | response/metadata ExUnit suites |
@@ -150,7 +150,6 @@ successful network response cannot force every error/race/future condition.
 | Runtime capability reporting/fail-closed requirements | `live_runtime_controls.exs`, `live_observability.exs` | `test/system_one_sdk/runtime_capabilities_test.exs` |
 | Alternate endpoint/model precedence and path-prefix preservation | every live entrypoint; CLI `--base-url/--model` | `live_example_configuration_test.exs`, `client_configuration_test.exs`, `runtime_test.exs` |
 | `SystemOneSDK.Test` fixture API | **Not live by design** | `guides/testing.md` and ExUnit. It must never masquerade as a production example. |
-| JSON Schema/codegen freshness | schema check accompanies `live_observability.exs`, but is not a network proof | `guides/json-schemas.md`, `mix typesafe.schema.verify`, <code>mix typesafe.verify --project-root .</code> |
 | Reach architecture boundaries | **Not a live behavior** | `mix reach.check --arch --smells`, `.reach.exs` |
 | Future unknown wire types, deterministic overload/failures/race ordering | **Cannot be honestly forced by a healthy live service** | targeted ExUnit fixtures/tests retain these guarantees |
 

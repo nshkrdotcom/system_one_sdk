@@ -15,6 +15,8 @@ defmodule SystemOneSDK.Providers.TypeSafe do
     SystemOneResponse
   }
 
+  alias TypeSafeAPISDK.Generated.SystemOne, as: TypeSafeSystemOne
+
   @system_one_local_options [:model, :extra_body]
 
   @error_fields [
@@ -40,7 +42,7 @@ defmodule SystemOneSDK.Providers.TypeSafe do
     TypeSafeAPISDK.new_client(opts)
   rescue
     error in TypeSafeAPISDK.Error ->
-      raise normalize_error(error)
+      reraise normalize_error(error), __STACKTRACE__
   end
 
   @impl true
@@ -58,7 +60,7 @@ defmodule SystemOneSDK.Providers.TypeSafe do
 
     request_opts = Keyword.drop(opts, @system_one_local_options)
 
-    case TypeSafeAPISDK.Generated.SystemOne.create(
+    case TypeSafeSystemOne.create(
            client,
            body,
            request_opts

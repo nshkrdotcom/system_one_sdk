@@ -142,7 +142,6 @@ Live.show(
 )
 
 # This local maintenance check complements, rather than replaces, the live call.
-:ok = SystemOneSDK.Schema.verify(Application.app_dir(:system_one_sdk, "priv/json_schema"))
 
 IO.puts("""
 All three known answer families emitted one answer event in Prepared order. Explicit caller metadata

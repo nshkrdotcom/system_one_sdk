@@ -3,10 +3,7 @@
 ## Start and migrate
 
 - [Getting started](getting-started.md)
-- [Migrating to 0.4.0](migration-0.4.md)
-- [Migrating to 0.3.0](migration-0.3.md)
 - [Runtime controls and semantic contracts](runtime-controls.md)
-- [Migrating to 0.2.0](migration-0.2.md)
 - [Cheatsheet](../cheatsheets/system_one_sdk.cheatmd)
 
 ## Questions, answers and execution
@@ -35,8 +32,5 @@
 
 ## Contracts and maintenance
 
-- [JSON Schema export](json-schemas.md)
-- [Generation and verification](generation-and-verification.md)
-- [Upstream provenance](upstream-provenance.md)
 - [Changelog](../CHANGELOG.md)
 - [MIT license](../LICENSE)

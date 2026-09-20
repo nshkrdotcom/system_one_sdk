@@ -558,7 +558,6 @@ Useful for:
 * confidence-like domain judgments,
 * continuous decision thresholds.
 
-The SDK requires a nonempty list of score criteria; the committed OpenAPI schema specifies `minItems: 1`. The [provenance guide](guides/upstream-provenance.md) records a stricter two-level server requirement, but that is not the SDK or schema rule.
 
 ### Question reference
 
@@ -1187,7 +1186,6 @@ TYPESAFE_API_KEY=your_key mix test --include live
 
 # Code Generation & Repository Layout
 
-The provider wire client is generated from the TypeSafe OpenAPI specification via PristineCodegen, while higher-level semantic interfaces and OTP tooling live in handwritten Elixir modules.
 
 Generated code lives under `lib/system_one_sdk/generated/` and is verified in CI.
 
@@ -1198,11 +1196,9 @@ Generated code lives under `lib/system_one_sdk/generated/` and is verified in CI
 | `lib/system_one_sdk.ex`, `lib/system_one_sdk/*.ex` | Public API, semantic contracts, OTP server, telemetry |
 | `lib/system_one_sdk/generated/` | Generated API client modules |
 | `codegen/` | Generator tooling (excluded from Hex package) |
-| `priv/upstream/openapi.json` | Committed OpenAPI specification |
 | `priv/generated/` | Generated contract manifests |
 | `test/`, `guides/`, `examples/` | Test suites, documentation guides, executable examples |
 
-For generator maintenance, upstream provenance, and contribution workflows, see [generation and verification](guides/generation-and-verification.md) and [upstream provenance](guides/upstream-provenance.md).
 
 ---
 
@@ -1330,7 +1326,6 @@ and held-out datasets, policy freezing, coverage/error metrics and latency/token
 
 * [Guide index](guides/index.md) — installation, configuration, API usage, and maintenance.
 * [Live example catalog](examples/README.md) — semantic answers, batching, telemetry, decision patterns, both public operations, and the full evaluation workflow.
-* [Upstream provenance](guides/upstream-provenance.md) — Python parity and reviewed API schema history.
 * [Changelog](CHANGELOG.md) — release history.
 * [Publishing](https://github.com/nshkrdotcom/system_one_sdk/blob/main/PUBLISHING.md) — package verification and release procedure.
 * [License](LICENSE) — MIT.

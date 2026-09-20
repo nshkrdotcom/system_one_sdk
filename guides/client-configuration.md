@@ -143,5 +143,5 @@ joining, and protected authentication headers lives in
 `client_configuration_test.exs`, and `runtime_test.exs`.
 
 See [runtime controls](runtime-controls.md) and
-[the 0.3 migration guide](migration-0.3.md) for cancellation, response contracts,
+the 0.3 migration guide for cancellation, response contracts,
 request budgets, retry inheritance, model helpers, and stable metadata.

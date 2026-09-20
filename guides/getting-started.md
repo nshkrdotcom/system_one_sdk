@@ -92,8 +92,8 @@ alternate-endpoint workflow.
 
 Existing `SystemOneSDK.Noul`, `Choice` and `Score` constructors remain unchanged.
 `system_one(client, state, %{q: legacy_question})` still returns string-keyed
-answers. Use [the 0.3 migration guide](migration-0.3.md) for runtime controls and
-[the 0.2 migration guide](migration-0.2.md) when moving legacy application code
+answers. Use the 0.3 migration guide for runtime controls and
+the 0.2 migration guide when moving legacy application code
 to `evaluate`; do not replace legacy constructor calls with tuple destructuring.
 
 Continue with [client configuration](client-configuration.md),

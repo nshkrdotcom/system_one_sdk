@@ -28,3 +28,7 @@ system_one_sdk.xml
 typesafe-sdk-python/
 
 typesafe_sdk.xml
+
+.tooling/
+
+system_one_sdk-*/

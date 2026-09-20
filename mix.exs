@@ -34,7 +34,7 @@ defmodule SystemOneSDK.MixProject do
   defp deps do
     [
       workspace_dep({:pristine, "~> 0.4.0"}),
-      {:typesafe_api_sdk, path: "../typesafe_api_sdk"},
+      workspace_dep({:typesafe_api_sdk, "~> 0.1.0"}),
       {:jason, "~> 1.4.5"},
       {:telemetry, "~> 1.3"},
       {:ex_doc, "~> 0.40.4", only: :dev, runtime: false},
@@ -62,8 +62,7 @@ defmodule SystemOneSDK.MixProject do
     [
       name: "system_one_sdk",
       description: description(),
-      files:
-        ~w(lib priv/upstream priv/json_schema guides cheatsheets examples README.md CHANGELOG.md LICENSE mix.exs assets docs/implementation),
+      files: ~w(lib guides cheatsheets examples README.md CHANGELOG.md LICENSE mix.exs assets),
       licenses: ["MIT"],
       links: %{"GitHub" => @source_url},
       maintainers: ["nshkrdotcom"]
@@ -87,8 +86,6 @@ defmodule SystemOneSDK.MixProject do
         "guides/system-one-and-questions.md",
         "guides/models.md",
         "guides/errors-and-retries.md",
-        "guides/generation-and-verification.md",
-        "guides/upstream-provenance.md",
         "guides/semantic-questions.md",
         "guides/answers-and-confidence.md",
         "guides/batching.md",
@@ -96,10 +93,6 @@ defmodule SystemOneSDK.MixProject do
         "guides/telemetry.md",
         "guides/runtime-capabilities.md",
         "guides/runtime-controls.md",
-        "guides/json-schemas.md",
-        "guides/migration-0.4.md",
-        "guides/migration-0.3.md",
-        "guides/migration-0.2.md",
         "guides/confidence-routing.md",
         "guides/composite-scoring.md",
         "guides/speculative-fan-out.md",
@@ -124,16 +117,12 @@ defmodule SystemOneSDK.MixProject do
           "guides/semantic-questions.md",
           "guides/answers-and-confidence.md",
           "guides/batching.md",
-          "guides/testing.md",
-          "guides/migration-0.4.md",
-          "guides/migration-0.3.md",
-          "guides/migration-0.2.md"
+          "guides/testing.md"
         ],
         Operations: [
           "guides/telemetry.md",
           "guides/runtime-capabilities.md",
-          "guides/runtime-controls.md",
-          "guides/json-schemas.md"
+          "guides/runtime-controls.md"
         ],
         Patterns: [
           "guides/confidence-routing.md",
@@ -148,7 +137,6 @@ defmodule SystemOneSDK.MixProject do
           "examples/evaluation/README.md",
           "cheatsheets/system_one_sdk.cheatmd"
         ],
-        Maintainers: ["guides/generation-and-verification.md", "guides/upstream-provenance.md"],
         Project: ["CHANGELOG.md", "LICENSE"]
       ],
       groups_for_modules: [
@@ -213,7 +201,6 @@ defmodule SystemOneSDK.MixProject do
   defp aliases do
     [
       ci: [
-        "typesafe.prereq",
         "format --check-formatted",
         "compile --warnings-as-errors",
         "cmd env MIX_ENV=test mix test --warnings-as-errors",
@@ -221,7 +208,6 @@ defmodule SystemOneSDK.MixProject do
         "reach.check --arch --smells",
         "dialyzer",
         "docs --warnings-as-errors",
-        "typesafe.schema.verify",
         "typesafe.verify"
       ]
     ]

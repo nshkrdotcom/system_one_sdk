@@ -1,7 +1,7 @@
 defmodule SystemOneSDK.Models do
   @moduledoc "Provider-neutral model catalog resource and pure catalog helpers."
 
-  alias SystemOneSDK.{Client, ListModelsResponse, ModelMetadata, Error}
+  alias SystemOneSDK.{Client, Error, ListModelsResponse, ModelMetadata}
 
   @spec list(Client.t(), keyword()) ::
           {:ok, ListModelsResponse.t()} | {:error, term()}
