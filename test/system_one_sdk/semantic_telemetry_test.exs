@@ -50,7 +50,7 @@ defmodule SystemOneSDK.SemanticTelemetryTest do
     assert measurements.duration >= 0
     assert answer_metadata.answer_type == :noul
     assert answer_metadata.question_index == 0
-    assert answer_metadata.prepared_fingerprint =~ "typesafe-prepared-v1:"
+    assert answer_metadata.prepared_fingerprint =~ "system-one-prepared-v1:"
     assert answer_measurements.confidence == 0.8
     assert answer_measurements.top_probability == 0.8
     assert_in_delta answer_measurements.distribution_margin, 0.6, 1.0e-12

@@ -11,7 +11,7 @@ defmodule SystemOneSDK.Prepared do
   alias SystemOneSDK.{Error, JSON}
   alias SystemOneSDK.Question.Validation
 
-  @fingerprint_namespace "typesafe-prepared-v1:"
+  @fingerprint_namespace "system-one-prepared-v1:"
 
   @enforce_keys [
     :encoded,

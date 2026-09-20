@@ -36,4 +36,4 @@ The project follows Semantic Versioning.
 - Removed the generated TypeSafe wire client and schema modules.
 - Removed TypeSafe provider-codegen and schema maintenance Mix tasks.
 - Removed committed TypeSafe JSON Schema exports.
-- Removed old TypeSafeSDK migration, implementation-plan, and handoff material.
+- Removed legacy pre-split migration, implementation-plan, and handoff material.

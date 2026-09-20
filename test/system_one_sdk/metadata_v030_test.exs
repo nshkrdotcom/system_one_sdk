@@ -20,12 +20,12 @@ defmodule SystemOneSDK.MetadataV030Test do
       type: :request_too_large,
       message: "never surface me as metadata",
       details: %{actual_bytes: 10, max_bytes: 9, request_body: "secret"},
-      prepared_fingerprint: "typesafe-prepared-v1:abc"
+      prepared_fingerprint: "system-one-prepared-v1:abc"
     }
 
     metadata = Error.metadata(error)
     assert metadata.request_budget == %{actual_bytes: 10, max_bytes: 9}
-    assert metadata.prepared_fingerprint == "typesafe-prepared-v1:abc"
+    assert metadata.prepared_fingerprint == "system-one-prepared-v1:abc"
     refute inspect(metadata) =~ "secret"
     refute Map.has_key?(metadata, :message)
   end

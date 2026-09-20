@@ -29,7 +29,7 @@ events =
 caller_metadata = %{
   example: "live-observability",
   trace: %{workflow: "synthetic-triage", sample: 1},
-  release: "0.4.0"
+  release: "0.5.0"
 }
 
 prepared =

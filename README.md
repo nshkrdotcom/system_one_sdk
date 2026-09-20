@@ -708,7 +708,7 @@ SystemOneSDK.RuntimeCapabilities.report(client).runtime
 
 Cancellation uses a `Pristine.Cancellation` token. When the underlying transport supports cancellation, the in-flight HTTP request is terminated and resources cleaned up.
 
-Prepared values support composition via `keys/1`, `put/3`, `delete/2`, `take/2`, and `merge/2`. Each modified composition re-validates and re-computes a versioned `typesafe-prepared-v1:<sha256>` fingerprint covering the question contract.
+Prepared values support composition via `keys/1`, `put/3`, `delete/2`, `take/2`, and `merge/2`. Each modified composition re-validates and re-computes a versioned `system-one-prepared-v1:<sha256>` fingerprint covering the question contract.
 
 See [runtime controls](guides/runtime-controls.md) for request budgets, response contracts, batch cancellation, and metadata options.
 

@@ -38,7 +38,7 @@ defmodule SystemOneSDK.PreparedV030Test do
     two = SystemOneSDK.prepare!(q: SystemOneSDK.choice("Pick", a: "A", b: "B"))
     reversed = SystemOneSDK.prepare!(q: SystemOneSDK.choice("Pick", b: "B", a: "A"))
 
-    assert "typesafe-prepared-v1:" <> digest = Prepared.fingerprint(one)
+    assert "system-one-prepared-v1:" <> digest = Prepared.fingerprint(one)
     assert byte_size(digest) == 64
     assert Prepared.fingerprint(one) == Prepared.fingerprint(two)
     refute Prepared.fingerprint(one) == Prepared.fingerprint(reversed)
@@ -51,7 +51,7 @@ defmodule SystemOneSDK.PreparedV030Test do
     prepared = SystemOneSDK.prepare!(q: SystemOneSDK.noul("Q?"))
 
     assert Prepared.fingerprint(prepared) ==
-             "typesafe-prepared-v1:9b4d5f23c1b270c1e5c7b126f7dd0efe7f12a47f228b0aabfb5d4fa754f9d7ae"
+             "system-one-prepared-v1:9b4d5f23c1b270c1e5c7b126f7dd0efe7f12a47f228b0aabfb5d4fa754f9d7ae"
   end
 
   test "composition re-runs semantic validation" do

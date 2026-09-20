@@ -169,7 +169,7 @@ defmodule SystemOneSDK.SystemOneResponse do
 
       type when is_binary(type) ->
         Logger.warning(
-          "Ignoring a TypeSafe answer with an unrecognized future type; inspect response.raw explicitly"
+          "Ignoring a provider answer with an unrecognized future type; inspect response.raw explicitly"
         )
 
         {:ok, :unknown}
