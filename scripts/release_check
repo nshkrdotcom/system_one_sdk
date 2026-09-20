@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+set -euo pipefail
+root="$(cd "$(dirname "$0")/.." && pwd)"
+case "${1:-}" in
+  system_one_sdk|system_one_bumblebee|system_one_server) package="$1" ;;
+  *) echo "usage: $0 {system_one_sdk|system_one_bumblebee|system_one_server}" >&2; exit 64 ;;
+esac
+cd "$root/packages/$package"
+mix run --no-start --no-compile --no-deps-check -e '
+  Enum.each(Mix.Project.config()[:deps], fn dep ->
+    opts = if tuple_size(dep) == 3, do: elem(dep, 2), else: elem(dep, 1)
+    if is_list(opts) and Enum.any?([:path, :git, :github], &Keyword.has_key?(opts, &1)) do
+      Mix.raise("Release blocked: non-Hex dependency #{inspect(dep)}")
+    end
+  end)
+'
+mix hex.build

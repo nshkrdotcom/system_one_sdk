@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+set -euo pipefail
+root="$(cd "$(dirname "$0")/.." && pwd)"
+for package in system_one_sdk system_one_bumblebee system_one_server; do
+  (
+    cd "$root/packages/$package"
+    echo "Checking $package"
+    mix deps.get
+    mix format --check-formatted
+    MIX_ENV=test mix compile --warnings-as-errors
+    MIX_ENV=test mix test --warnings-as-errors
+  )
+done

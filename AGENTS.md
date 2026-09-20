@@ -1,60 +1,21 @@
-# SystemOneSDK Agent Notes
+# System One Poncho agent notes
 
-## Architecture
+This is not an umbrella. Run Mix inside `packages/<package>`; root `scripts/qc`
+runs fast checks across all three independent projects.
 
-SystemOneSDK is provider-neutral.
+SystemOneSDK → SystemOneSDK.Provider → provider adapter → provider SDK.
+TypeSafeAPISDK owns TypeSafe HTTP/auth/defaults/generated operations/wire schemas,
+retries/raw metadata/OpenAPI maintenance. Do not reintroduce codegen here.
+SystemOneSDK owns reusable semantics, preparation, evaluation, batching, telemetry,
+OTP/runtime controls, model helpers and testing, including upcoming v1 conformance.
 
-Dependency direction:
+Main SDK uses published typesafe_api_sdk ~> 0.1.0 without bootstrap overrides.
+Optional packages use explicit development-only sibling paths; before releasing,
+replace with system_one_sdk ~> 0.6.0. SDK must never depend on optional packages.
 
-    SystemOneSDK
-      -> SystemOneSDK.Provider
-      -> provider adapter
-      -> provider SDK
-
-The built-in TypeSafe path is:
-
-    SystemOneSDK
-      -> SystemOneSDK.Providers.TypeSafe
-      -> TypeSafeAPISDK
-      -> TypeSafe hosted API
-
-`typesafe_api_sdk` owns TypeSafe-specific HTTP, authentication, endpoint
-defaults, generated operations, wire schemas, retries, raw HTTP metadata, and
-OpenAPI maintenance.
-
-SystemOneSDK owns reusable semantic behavior: Noul, Choice, Score, preparation,
-evaluation, response contracts, batching, telemetry, OTP integration, runtime
-controls, model helpers, evaluation tooling, and testing helpers.
-
-Do not reintroduce TypeSafe OpenAPI/codegen ownership here.
-
-## Local dependency development
-
-The committed dependency is:
-
-    {:typesafe_api_sdk, "~> 0.1.0"}
-
-For sibling development:
-
-    export MIX_WORKSPACE_OPS_BOOTSTRAP="$PWD/scripts/local_workspace.exs"
-
-## Quality gates
-
-    mix deps.get
-    mix format --check-formatted
-    mix compile --warnings-as-errors
-    mix test --warnings-as-errors
-    mix credo --strict
-    mix dialyzer
-    mix docs --warnings-as-errors
-
-Package verification must disable local dependency overrides:
-
-    unset MIX_WORKSPACE_OPS_BOOTSTRAP
-    unset TYPESAFE_API_SDK_PATH
-    mix hex.build --unpack
-
-## Release order
-
-Publish the required `typesafe_api_sdk` version before the SystemOneSDK release
-that depends on it.
+Fast gates: mix deps.get; mix format --check-formatted;
+MIX_ENV=test mix compile --warnings-as-errors; mix test --warnings-as-errors.
+Docs: mix docs --warnings-as-errors. Main SDK full gates additionally include
+mix credo --strict and mix dialyzer. Never include live tests by default.
+Use scripts/release_check PACKAGE for manifest/build verification.
+See docs/ROADMAP.md and docs/RELEASE_ORDER.md. No standalone contracts package.

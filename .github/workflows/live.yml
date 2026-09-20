@@ -9,28 +9,19 @@ permissions:
 jobs:
   live:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: packages/system_one_sdk
 
     steps:
       - name: Checkout SystemOneSDK
         uses: actions/checkout@v4
-
-      - name: Checkout TypeSafeAPISDK
-        uses: actions/checkout@v4
-        with:
-          repository: nshkrdotcom/typesafe_api_sdk
-          path: .tooling/typesafe_api_sdk
 
       - name: Set up BEAM
         uses: erlef/setup-beam@v1
         with:
           elixir-version: '1.20.4'
           otp-version: '29.0'
-
-      - name: Configure local provider dependency
-        shell: bash
-        run: |
-          echo "TYPESAFE_API_SDK_PATH=$GITHUB_WORKSPACE/.tooling/typesafe_api_sdk" >> "$GITHUB_ENV"
-          echo "MIX_WORKSPACE_OPS_BOOTSTRAP=$GITHUB_WORKSPACE/scripts/local_workspace.exs" >> "$GITHUB_ENV"
 
       - name: Fetch dependencies
         run: mix deps.get

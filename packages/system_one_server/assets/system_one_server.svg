@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="200px" height="200px" viewBox="0 0 200 200" role="img" aria-labelledby="title">
+<title id="title">System One Server — network request routing</title>
+<defs>
+ <linearGradient id="edge" x2="1" y2="1"><stop stop-color="#67e8f9"/><stop offset="1" stop-color="#2563eb"/></linearGradient>
+ <radialGradient id="base"><stop stop-color="#243449"/><stop offset="1" stop-color="#080f20"/></radialGradient>
+ <clipPath id="hex"><polygon points="100,6 182,53 182,147 100,194 18,147 18,53"/></clipPath>
+ <filter id="glow"><feGaussianBlur stdDeviation="2"/></filter>
+</defs>
+<g clip-path="url(#hex)">
+<polygon points="100,6 182,53 182,147 100,194 18,147 18,53" fill="url(#base)" stroke="url(#edge)" stroke-width="5"/>
+<g stroke="#67e8f9" opacity=".08" stroke-width=".5"><path d="M18 28H182 M28 12V188"/><path d="M18 44H182 M44 12V188"/><path d="M18 60H182 M60 12V188"/><path d="M18 76H182 M76 12V188"/><path d="M18 92H182 M92 12V188"/><path d="M18 108H182 M108 12V188"/><path d="M18 124H182 M124 12V188"/><path d="M18 140H182 M140 12V188"/><path d="M18 156H182 M156 12V188"/><path d="M18 172H182 M172 12V188"/></g>
+<polygon points="100,17 172,59 172,141 100,183 28,141 28,59" fill="none" stroke="url(#edge)" stroke-width=".7"/>
+<circle cx="100" cy="100" r="65" fill="none" stroke="#67e8f9" opacity=".3" stroke-dasharray="2 6"/>
+<path d="M46 66H70V100H130V66H154 M46 136H70V100 M130 100V136H154" fill="none" stroke="#5eead4" stroke-width="2.5"/><rect x="78" y="76" width="44" height="15" rx="3" fill="#12354a" stroke="#67e8f9"/><circle cx="85" cy="83" r="2" fill="#5eead4"/><path d="M95 81H116 M95 86H110" stroke="#38bdf8"/><rect x="78" y="96" width="44" height="15" rx="3" fill="#12354a" stroke="#67e8f9"/><circle cx="85" cy="103" r="2" fill="#5eead4"/><path d="M95 101H116 M95 106H110" stroke="#38bdf8"/><rect x="78" y="116" width="44" height="15" rx="3" fill="#12354a" stroke="#67e8f9"/><circle cx="85" cy="123" r="2" fill="#5eead4"/><path d="M95 121H116 M95 126H110" stroke="#38bdf8"/><rect x="33" y="57" width="18" height="18" rx="4" fill="#102b3f" stroke="#5eead4"/><circle cx="42" cy="66" r="3" fill="#a5f3fc"/><rect x="149" y="57" width="18" height="18" rx="4" fill="#102b3f" stroke="#5eead4"/><circle cx="158" cy="66" r="3" fill="#a5f3fc"/><rect x="33" y="127" width="18" height="18" rx="4" fill="#102b3f" stroke="#5eead4"/><circle cx="42" cy="136" r="3" fill="#a5f3fc"/><rect x="149" y="127" width="18" height="18" rx="4" fill="#102b3f" stroke="#5eead4"/><circle cx="158" cy="136" r="3" fill="#a5f3fc"/><path d="M100 38V64 M95 58L100 64 105 58 M100 140V164 M95 158L100 164 105 158" fill="none" stroke="#e0f2fe" stroke-width="2"/>
+<path d="M28 59L100 17 172 59" fill="none" stroke="white" opacity=".3"/>
+</g></svg>

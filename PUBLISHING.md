@@ -1,50 +1,14 @@
-# Publishing SystemOneSDK
+# Publishing
 
-## Release order
+Run commands inside the chosen `packages/<package>` directory. See
+[release order](docs/RELEASE_ORDER.md). No package is published by the scripts.
 
-`system_one_sdk 0.5.0` depends on:
+Full SDK gates: `mix deps.get`, `mix format --check-formatted`,
+`mix compile --warnings-as-errors`, `mix test --warnings-as-errors`,
+`mix credo --strict`, `mix dialyzer`, `mix docs --warnings-as-errors`.
 
-    {:typesafe_api_sdk, "~> 0.1.0"}
-
-Publish `typesafe_api_sdk 0.1.0` before publishing SystemOneSDK 0.5.0.
-
-## Local development
-
-Use the sibling provider checkout without changing committed package metadata:
-
-    export MIX_WORKSPACE_OPS_BOOTSTRAP="$PWD/scripts/local_workspace.exs"
-    mix deps.get
-    mix test
-
-## Pre-release gates
-
-    export MIX_WORKSPACE_OPS_BOOTSTRAP="$PWD/scripts/local_workspace.exs"
-
-    mix deps.get
-    mix format --check-formatted
-    mix compile --warnings-as-errors
-    mix test --warnings-as-errors
-    mix credo --strict
-    mix dialyzer
-    mix docs --warnings-as-errors
-
-Optional real-provider verification:
-
-    export TYPESAFE_API_KEY='...'
-    mix test --include live
-
-## Package gate
-
-Disable all local dependency overrides:
-
-    unset MIX_WORKSPACE_OPS_BOOTSTRAP
-    unset TYPESAFE_API_SDK_PATH
-
-    rm -rf system_one_sdk-0.5.0
-    mix hex.build --unpack
-
-`typesafe_api_sdk` must appear as a normal Hex requirement.
-
-After `typesafe_api_sdk 0.1.0` is available on Hex and all release gates pass:
-
-    mix hex.publish
+From the root run `scripts/release_check PACKAGE` to reject local dependencies
+and build the Hex artifact. Inspect the archive, metadata, LICENSE and docs.
+The optional packages intentionally fail this gate until their development-only
+sibling dependencies become `{:system_one_sdk, "~> 0.6.0"}` after SDK publication.
+Runtime completion and full release review are required beyond this structural gate.

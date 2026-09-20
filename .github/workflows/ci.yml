@@ -12,28 +12,22 @@ permissions:
 jobs:
   quality:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        package: [system_one_sdk, system_one_bumblebee, system_one_server]
+    defaults:
+      run:
+        working-directory: packages/${{ matrix.package }}
 
     steps:
       - name: Checkout SystemOneSDK
         uses: actions/checkout@v4
-
-      - name: Checkout TypeSafeAPISDK
-        uses: actions/checkout@v4
-        with:
-          repository: nshkrdotcom/typesafe_api_sdk
-          path: .tooling/typesafe_api_sdk
 
       - name: Set up BEAM
         uses: erlef/setup-beam@v1
         with:
           elixir-version: '1.20.4'
           otp-version: '29.0'
-
-      - name: Configure local provider dependency
-        shell: bash
-        run: |
-          echo "TYPESAFE_API_SDK_PATH=$GITHUB_WORKSPACE/.tooling/typesafe_api_sdk" >> "$GITHUB_ENV"
-          echo "MIX_WORKSPACE_OPS_BOOTSTRAP=$GITHUB_WORKSPACE/scripts/local_workspace.exs" >> "$GITHUB_ENV"
 
       - name: Fetch dependencies
         run: mix deps.get
@@ -48,17 +42,16 @@ jobs:
         run: mix test --warnings-as-errors
 
       - name: Credo
+        if: matrix.package == 'system_one_sdk'
         run: mix credo --strict
 
       - name: Dialyzer
+        if: matrix.package == 'system_one_sdk'
         run: mix dialyzer
 
       - name: Docs
         run: mix docs --warnings-as-errors
 
       - name: Hex package
-        shell: bash
-        run: |
-          unset MIX_WORKSPACE_OPS_BOOTSTRAP
-          unset TYPESAFE_API_SDK_PATH
-          mix hex.build
+        if: matrix.package == 'system_one_sdk'
+        run: ../../scripts/release_check system_one_sdk

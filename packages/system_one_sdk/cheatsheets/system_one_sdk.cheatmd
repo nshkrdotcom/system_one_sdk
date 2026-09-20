@@ -1,0 +1,144 @@
+# SystemOneSDK 0.6.0
+
+## Endpoint and provider selection
+{: .col-2}
+
+```bash
+export TYPESAFE_API_KEY="provider-key"
+export TYPESAFE_BASE_URL="https://your-typesafe-host.example/deployment"
+export TYPESAFE_DEFAULT_MODEL="provider-model-id"
+```
+
+```elixir
+client = SystemOneSDK.new_client(
+  api_key: key,
+  base_url: "https://your-typesafe-host.example/deployment",
+  model: "provider-model-id"
+)
+```
+
+The base URL is the root before `/v1/models` and `/v1/systemone`; path prefixes are
+retained. Use the selected provider's key/model and TypeSafe operation contract. A
+generic OpenAI-compatible endpoint is not automatically TypeSafe-compatible.
+
+## Client and questions
+{: .col-2}
+
+### Strict semantic API
+
+```elixir
+client = SystemOneSDK.new_client()
+questions = [
+  urgent: SystemOneSDK.noul("Urgent?"),
+  team: SystemOneSDK.choice("Team?", billing: "Payments", technical: "Product"),
+  severity: SystemOneSDK.score("Severity?", ["Low", "High"])
+]
+prepared = SystemOneSDK.prepare!(questions)
+{:ok, response} = SystemOneSDK.evaluate(client, state, prepared)
+```
+
+### Tuple constructors
+
+```elixir
+SystemOneSDK.Question.Noul.new("Urgent?", true: "Time-sensitive")
+SystemOneSDK.Question.Choice.new("Team?", [billing: nil, technical: nil])
+SystemOneSDK.Question.Score.new("Severity?", ["Low", "High"])
+```
+
+Each also has `new!`. Legacy `SystemOneSDK.Noul/Choice/Score.new` still returns
+legacy structs; `system_one` still uses string response keys.
+
+## Answers and policy
+{: .col-2}
+
+```elixir
+team = SystemOneSDK.Response.fetch!(response, :team)
+SystemOneSDK.Answer.Choice.ranked(team)
+SystemOneSDK.Answer.Choice.margin(team)
+SystemOneSDK.Answer.confidence(team)
+SystemOneSDK.Answer.gate(team, act: 0.9, review: 0.7)
+SystemOneSDK.Answer.yes?(response.answers.urgent, 0.85)
+SystemOneSDK.Answer.Score.expected_level(response.answers.severity)
+SystemOneSDK.Answer.Score.max_level(response.answers.severity)
+SystemOneSDK.Answer.Score.normalized(response.answers.severity)
+SystemOneSDK.Response.values(response)
+# %{urgent: 0.91, team: :billing, severity: 1.7}
+```
+
+Thresholds are explicit application policy, not safety guarantees. Expected and
+modal Score levels differ; Noul confidence is derived as max(p, 1-p).
+
+## Batch, errors and tests
+{: .col-2}
+
+```elixir
+SystemOneSDK.evaluate_many(client, states, prepared,
+  max_concurrency: 8, max_pending: 32, ordered: true, on_error: :collect,
+  task_timeout_ms: 40_000, attempt_timeout_ms: 5_000)
+SystemOneSDK.evaluate_stream(client, states, prepared, ordered: false)
+SystemOneSDK.Error.retryable?(error)
+SystemOneSDK.Error.retry_after(error)
+
+client = SystemOneSDK.Test.client()
+client = SystemOneSDK.Test.stub(client, urgent: {:noul, 0.9})
+# Run application code, then verify before the creating process exits.
+SystemOneSDK.Test.verify!(client)
+SystemOneSDK.Test.close(client)
+```
+
+Unordered results have batch_index; errors use details.batch_index. Request
+`timeout` and retry policy values still use seconds. Retries can repeat processing.
+
+## Contract and operations tools
+
+```bash
+mix typesafe.capabilities
+mix typesafe.record --output tmp/live --base-url "$TYPESAFE_BASE_URL" --model "$TYPESAFE_DEFAULT_MODEL"
+mix reach.check --arch --smells
+```
+
+Recording needs a real API key; no live data is fabricated. Unadvertised transport
+bounds remain unverified. Semantic telemetry excludes automatic prompt/state data.
+
+
+## 0.3 runtime controls
+{: .col-2}
+
+```elixir
+cancel = Pristine.Cancellation.new()
+{:ok, response} = SystemOneSDK.evaluate(client, state, prepared,
+  cancellation: cancel,
+  max_request_bytes: 262_144,
+  response_contract: [on_unknown_answer: :error])
+
+SystemOneSDK.Prepared.keys(prepared)
+SystemOneSDK.Prepared.fingerprint(prepared)
+SystemOneSDK.Response.metadata(response)
+SystemOneSDK.RuntimeCapabilities.report(client)
+```
+
+Per-call retry keys inherit omitted client retry fields; `retry: false` disables
+retry for that call. Cancellation uses Pristine directly and cannot prove that a
+remote service did not begin processing a request.
+
+## 0.4 OTP and answer telemetry
+{: .col-2}
+
+```elixir
+# Successful evaluate/4 calls emit one event per known answer:
+[:system_one_sdk, :answer]
+# measurements: confidence, top_probability, distribution_margin
+# metadata: answer_type, question_index, model/request ID, Prepared fingerprint
+
+children = [
+  {Task.Supervisor, name: MyApp.TypeSafeTasks},
+  {MyApp.Triage,
+   client: client,
+   task_supervisor: MyApp.TypeSafeTasks,
+   max_in_flight: 32}
+]
+```
+
+`MyApp.Triage` uses `SystemOneSDK.OTP.Server` and returns `{:evaluate, ...}` from
+callbacks. The SDK starts no global task supervisor. See `guides/otp-server.md`
+and `guides/recursive-decisions.md`.
