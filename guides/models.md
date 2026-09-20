@@ -1,0 +1,53 @@
+# Models
+
+List the models available from the endpoint/account selected by the client:
+
+```elixir
+{:ok, %SystemOneSDK.ListModelsResponse{models: models}} =
+  SystemOneSDK.list_models(client)
+```
+
+Each model is a `SystemOneSDK.ModelMetadata` with required `name`, `description`,
+and `release_date` fields. Unknown future fields are ignored.
+
+```elixir
+Enum.map(models, & &1.name)
+
+# Select a returned model name for an evaluation:
+SystemOneSDK.system_one(client, state, questions, model: "jev-latest")
+```
+
+The evaluation response reports the model that actually handled the request;
+an alias such as `jev-latest` may resolve to a concrete version on the official
+service. Alternate TypeSafe-compatible hosts can expose different model IDs; use a
+name returned by that host instead of assuming the default alias exists everywhere.
+
+## Response metadata and reproducible evaluation
+
+The model-list response also retains raw JSON, request ID, raw HTTP response,
+retry count and elapsed milliseconds. `Test.stub_models/3` exercises the same
+list-model decoding path. For repeated evaluations, choose a concrete model
+version from the list rather than assuming an alias is immutable; record the
+actual returned model and request IDs. The bundled evaluation workflow freezes
+an observed model with its development policy for held-out runs.
+
+## Pure catalog lookup helpers in 0.3
+
+```elixir
+{:ok, response} = SystemOneSDK.list_models(client)
+{:ok, model} = SystemOneSDK.Models.find(response, "jev")
+model = SystemOneSDK.Models.find!(response.models, "jev")
+{:ok, latest} = SystemOneSDK.Models.latest(response, :all)
+```
+
+`find/2` is exact; it does not perform prefix or fuzzy matching and reports
+ambiguity. `latest/2` uses the structured `release_date`. Selectors can be
+`:all`, an exact model name, exact model-field keyword/map filters, or a unary
+predicate. Invalid dates or an objective latest-date tie fail with an
+`unordered_model_catalog` error rather than guessing from lexical or returned
+order.
+
+`mix run examples/live_composition_contracts.exs` demonstrates exact `find/2`,
+`find!/2`, and objective `latest/2` selection using the real catalog returned by the
+selected endpoint. It does not fabricate dated model names when a provider catalog
+lacks usable dates or has an ambiguous latest entry.

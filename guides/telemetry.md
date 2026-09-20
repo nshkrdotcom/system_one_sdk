@@ -1,0 +1,71 @@
+# Privacy-Oriented Semantic Telemetry
+
+`evaluate` emits `[:system_one_sdk, :evaluate, :start | :stop | :exception]` above
+Pristine's existing request/attempt telemetry. There is one semantic span per
+call, including local validation, all runtime attempts and decoding.
+
+```elixir
+SystemOneSDK.evaluate(client, state, questions,
+  telemetry_metadata: %{job_id: "job-42", workflow: "triage"})
+```
+
+Caller metadata is nested under `:caller`, never merged into reserved fields.
+Start metadata includes operation, requested model, question count and a span
+reference. Successful stop metadata adds outcome, actual model, status, request
+ID and retry count; token counts are measurements when present. Stop duration
+uses native monotonic units; convert with `System.convert_time_unit/3`.
+Failures are ordinary stop events with `error_type`, not raw errors. An error's
+retry count is nil unless the underlying error actually supplies it.
+
+No automatic event includes state, question content/IDs, bodies, headers,
+authorization, exception reasons or stacktraces. Exception events include only
+kind/outcome and safe span context, then re-raise the original exception to the
+caller. The generic runtime and host telemetry handlers have their own privacy
+contracts; this guarantee describes the SDK's semantic events, not every library
+in the application. Caller-supplied metadata can still leak data: put IDs there,
+not customer text or secrets.
+
+
+## Per-answer calibration events
+
+After a successful semantic response passes request-relative validation, 0.4.0
+emits one `[:system_one_sdk, :answer]` event per known answer in Prepared order.
+These events are designed for aggregate monitoring without turning telemetry into
+a content log.
+
+Measurements:
+
+- `confidence` — provider confidence for Choice/Score, derived `max(p, 1-p)` for Noul;
+- `top_probability` — the largest probability mass without revealing which label won;
+- `distribution_margin` — gap between the top two masses (for Noul, `abs(2p - 1)`).
+
+Metadata contains only `answer_type`, zero-based `question_index`, bounded model
+and request IDs, the Prepared fingerprint, and the explicitly supplied `:caller`
+metadata. It does **not** include question IDs/text, state, selected labels, Score
+values, Noul direction, raw answer bodies, headers, credentials, or OTP request
+tags.
+
+```elixir
+:telemetry.attach(
+  "typesafe-answer-metrics",
+  [:system_one_sdk, :answer],
+  &MyApp.TypeSafeMetrics.handle/4,
+  nil
+)
+```
+
+If application analysis needs labels or ground truth, join these structural
+measurements against an application-owned evaluation record using an identifier
+you deliberately place in `telemetry_metadata`; do not put customer content into
+that metadata.
+
+The batch owner emits `[:system_one_sdk, :batch, :cancelled]` for observed task
+timeouts/exits with input index and classification, never raw exit reasons.
+A process killed without executing cleanup cannot emit a guaranteed terminal
+semantic span. Early-halt cleanup does not fabricate completion/cancellation
+measurements for unobserved work, and no event proves remote cancellation.
+
+Run `mix run examples/live_observability.exs` for a complete live walkthrough of
+Noul, Choice, and Score answer events, event ordering, nested caller metadata, and
+privacy checks. See [the live example catalog](../examples/README.md) for endpoint
+setup and API-call costs.

@@ -1,0 +1,104 @@
+# Errors And Retries
+
+Network/API calls return `{:ok, value}` or `{:error, %SystemOneSDK.Error{}}`.
+
+```elixir
+case SystemOneSDK.list_models(client) do
+  {:ok, response} ->
+    Enum.map(response.models, & &1.name)
+
+  {:error, %SystemOneSDK.Error{type: type, status: status, message: message}} ->
+    IO.inspect(%{type: type, status: status, message: message}, label: "API failure")
+end
+```
+
+`error.type` uses these primary values:
+
+- `:bad_request` (400)
+- `:authentication` (401)
+- `:permission_denied` (403)
+- `:not_found` (404)
+- `:unprocessable_entity` (422)
+- `:rate_limit` (429)
+- `:internal_server` (5xx)
+- `:api_error` for other unsuccessful statuses
+- `:connection`, `:timeout`, `:response_validation`, `:configuration`
+
+The error also preserves status, body, headers, TypeSafe request ID, retry-after
+milliseconds, the raw `Pristine.Response`, and an endpoint string when Pristine
+transport metadata provides it. Successful `SystemOneResponse` and
+`ListModelsResponse` values likewise retain `request_id` and `raw_http_response`;
+use their `request_id!/1` / `raw_http_response!/1` accessors when metadata is
+required rather than optional.
+
+`SystemOneSDK.RetryPolicy` defaults to the supplied Python SDK's public values:
+two retries, 0.5-second exponential initial backoff, 5-second cap, 0.25 jitter,
+retrying 408/429/5xx plus connection/timeouts, honoring Retry-After, and a
+30-second retry budget. The budget includes the first attempt and stops before
+a retry delay would reach the limit, preserving the last error. Set `timeout: nil`
+in the retry policy to remove that budget. Zero initial backoff or a zero cap
+disables backoff; Retry-After remains effective unless explicitly disabled.
+
+
+## Pristine 0.3.0 status-range prerequisite
+
+The Python SDK retries every HTTP status from 500 through 599. SystemOneSDK
+represents that rule with Pristine 0.3.0's provider-level
+`status_retry_ranges` contract rather than enumerating one hundred integer
+overrides or changing Pristine's global defaults. Exact caller-selected HTTP
+statuses continue to use exact provider overrides, while the default full 5xx
+set compacts to one `500..599` rule.
+
+Per-call `RetryPolicy` values rebuild the provider profile used for that call,
+so replacing `http_statuses` really changes classification rather than only
+changing the backoff loop. `respect_retry_after: false` also clears Pristine's
+classified retry delay for that call.
+
+## 0.2.0 local errors and policy queries
+
+Strict constructors/preparation/evaluation use `:invalid_request`, with
+`error.path` component lists, `field_path` and structured `details`.
+Relational response failures retain `:response_validation` plus the original HTTP
+status/body/headers/request ID. Batch failures add `details.batch_index`;
+worker crashes use `:task_exit`, and worker timeouts use `:timeout` with
+`details.scope == :batch`. Missing required runtime guarantees use
+`:runtime_capability`. `evaluate!` / `system_one!` raise the normalized error.
+
+```elixir
+SystemOneSDK.Error.retryable?(error)
+SystemOneSDK.Error.retryable?(error, client.retry)
+SystemOneSDK.Error.retry_after(error) # milliseconds or nil
+```
+
+Retryability describes the error category under a policy, not remaining attempt
+budget or an instruction to automatically resubmit exhausted work. Validation
+and local batch-lifecycle errors are not classified as transport-retryable.
+
+## At-least-once execution and ambiguous failures
+
+Retries can execute an evaluation more than once. A connection failure after
+submission does not prove that the server failed to process or bill the request.
+The SDK preserves the existing retry defaults; disable retry explicitly when the
+risk of replay outweighs resilience. A batch task timeout or local cancellation
+also cannot undo a remote operation. Never treat retryability as an exactly-once
+execution guarantee, and do not infer total billed tokens from the final
+successful response alone. Error bodies/details are available to the caller but
+must not be dumped into production telemetry without an explicit privacy review.
+
+
+## 0.3.0 retry inheritance and cancellation
+
+Client retry configuration is now inherited structurally by per-call keyword/map
+overrides: omitted keys keep the client value, explicit keys win, and `retry: false`
+disables retry for that call. TypeSafe resolves the policy only; Pristine 0.4 owns
+attempt execution, backoff, Retry-After handling, result classification and
+cancellation-aware retry waits.
+
+`cancellation: Pristine.Cancellation.new()` is forwarded unchanged to Pristine. A
+cancelled operation surfaces as `:cancelled`, is non-retryable, and remains distinct
+from timeout/connection/API errors. Cancellation terminates verified local unary HTTP
+work when the configured Pristine transport advertises support, but it is not a
+remote rollback or exactly-once guarantee.
+
+`SystemOneSDK.Error.metadata/1` exposes bounded structural diagnostics without raw
+bodies, credentials or question/state text.

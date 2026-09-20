@@ -1,0 +1,74 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      pristine_ref:
+        description: Optional Pristine commit for pre-publication source QC
+        type: string
+        default: ''
+      execution_plane_ref:
+        description: Optional Execution Plane commit for pre-publication HTTP source QC
+        type: string
+        default: ''
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Elixir ${{ matrix.elixir }} / OTP ${{ matrix.otp }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - elixir: '1.18.4'
+            otp: '27.3'
+          - elixir: '1.19.5'
+            otp: '28.3.1'
+          - elixir: '1.20.4'
+            otp: '29.0.6'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup
+        with:
+          elixir: ${{ matrix.elixir }}
+          otp: ${{ matrix.otp }}
+          pristine_ref: ${{ inputs.pristine_ref }}
+          execution_plane_ref: ${{ inputs.execution_plane_ref }}
+      - run: mix typesafe.prereq
+      - run: mix compile --warnings-as-errors
+      - run: mix test --warnings-as-errors
+      - run: mix typesafe.schema.verify
+      - run: mix typesafe.verify --project-root .
+
+  quality:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup
+        with:
+          elixir: '1.19.5'
+          otp: '28.3.1'
+          pristine_ref: ${{ inputs.pristine_ref }}
+          execution_plane_ref: ${{ inputs.execution_plane_ref }}
+      - run: mix typesafe.prereq
+      - run: mix format --check-formatted
+      - run: mix compile --warnings-as-errors
+      - run: mix credo --strict
+      - run: mix reach.check --arch --smells
+      - run: mix dialyzer
+      - run: mix docs --warnings-as-errors
+      - run: mix typesafe.schema.verify
+      - run: mix typesafe.verify --project-root .
+      - run: mix hex.build --unpack

@@ -1,0 +1,298 @@
+# SystemOneSDK 0.4.0 implementation handoff
+
+Release target: **0.4.0**
+Date: **2026-09-17**
+
+## Status
+
+The follow-on addition to the same unreleased **0.4.0** has now completed
+target-host implementation QC on 2026-09-17 using **Elixir 1.19.5 / OTP
+28.3.1**.
+
+The complete live-example catalog, alternate-endpoint/model selection,
+composition/contracts coverage, runtime-control/cancellation example, OTP facade
+example, recursive-decision examples, observability coverage and evaluation
+workflow have all been exercised on the target host.
+
+Offline release gates are green: formatter, warnings-as-errors compilation,
+**1 doctest + 146 tests with 0 failures** (2 live excluded), strict Credo,
+Reach architecture policy, Dialyzer, warnings-as-errors docs, schema freshness,
+codegen freshness, package build and `mix ci`.
+
+Credentialed validation is also green: live-inclusive ExUnit passed
+**1 doctest + 148 tests with 0 failures**, the recorder completed without
+altering approved fixtures, the OTP and recursive examples completed against
+the real API, and the bundled synthetic development/held-out evaluations
+completed 12/12 and 8/8 requests respectively with zero execution failures.
+
+Two live-example defects were found and fixed during target-host QC rather than
+being hidden by fixtures: the OTP example used an illegal same-pattern pinned
+variable, and recursive bisection/verification state contained non-JSON Elixir
+values. Both were corrected at the example/application boundary and rerun live.
+
+Pristine runtime compatibility remains against published Hex `pristine 0.4.0`.
+Unpublished `pristine_codegen` and `pristine_provider_testkit` maintenance
+packages use the CI bootstrap pinned to
+`04ba7b112413591f5cb9260f1d270bbbeb8a0630`; runtime dependencies remain
+ordinary published Hex requirements.
+
+The final package was rebuilt after all code and documentation fixes and its
+unpacked `mix hex.publish --dry-run --yes` completed successfully with workspace
+source overrides unset; no package or documentation was published.
+
+The implementation release-candidate commit
+`a1b77fa0aca1eb53f310af4a1c282764b2283ef9` was pushed to `main` and the normal
+push-triggered GitHub `CI` workflow passed in run `35293833582`: all three
+Elixir/OTP matrix jobs (1.18.4/27.3, 1.19.5/28.3.1, 1.20.4/29.0.6) and the quality
+job completed successfully. The Node.js-version notices emitted for
+`actions/checkout@v4` were advisory annotations, not failed release gates.
+
+Hex publication and creation/push of `v0.4.0` remain intentionally pending. The
+post-QC release procedure is now encoded in `scripts/release_qc.sh` and
+`PUBLISHING.md`. Documentation/procedure-only edits made after the live pass do
+not require another billable live run unless executable/runtime behavior changes;
+they still require non-live QC, a fresh package dry-run when package contents
+change, and push-triggered CI for the exact final commit.
+
+## Implemented 0.4.0 features
+
+### 1. Executable architecture boundaries
+
+Added `.reach.exs`, `reach ~> 2.8` as dev/test tooling, and the gate:
+
+```bash
+mix reach.check --arch --smells
+```
+
+It is wired into `mix ci`, `.github/workflows/ci.yml` quality checks, and
+`scripts/check_handoff.sh`.
+
+The configured handwritten layers are:
+
+- semantic: Question/Prepared/Answer/Response/request-contract modules;
+- orchestration: Evaluation/Batch/Telemetry/OTP.Server;
+- runtime: Client/SystemOne/Pristine integration/capability modules.
+
+Forbidden directions are semantic -> orchestration, semantic -> runtime, and
+runtime -> orchestration. Generated modules and data-only response structs are
+intentionally not modeled by this small Reach graph.
+
+### 2. Privacy-safe per-answer telemetry
+
+`SystemOneSDK.Telemetry.answers/3` is called only after successful semantic
+response enrichment/validation. `evaluate/4` now emits one
+`[:system_one_sdk, :answer]` event for each known answer in Prepared order.
+
+Measurements:
+
+- `confidence`;
+- `top_probability`;
+- `distribution_margin`.
+
+Metadata:
+
+- `answer_type`;
+- zero-based `question_index`;
+- bounded model/request IDs;
+- Prepared fingerprint;
+- explicit caller telemetry metadata.
+
+It deliberately omits question IDs/text, selected Choice labels, Noul direction,
+Score values, state, bodies, headers, credentials, raw errors, and OTP tags.
+
+### 3. `SystemOneSDK.Response.values/1`
+
+Added a convenience projection:
+
+- Noul -> numeric probability;
+- Choice -> selected caller key;
+- Score -> expected numeric score.
+
+Caller question keys are preserved. Unknown future answer types remain only in
+`unknown_answers`. This is not a second response hierarchy.
+
+### 4. Bounded OTP facade
+
+Added `SystemOneSDK.OTP.Server`.
+
+Important design constraints:
+
+- no SDK-global `Application` child or global TaskSupervisor;
+- host supplies a running `Task.Supervisor`;
+- host supplies the existing `SystemOneSDK.Client`;
+- `max_in_flight` defaults to 32 and is bounded to 1..1024;
+- semantic requests use the normal `SystemOneSDK.Evaluation.run/4` path;
+- typed response/error structs are preserved;
+- callbacks launch work with explicit `{:evaluate, ...}` rather than overloading
+  ordinary GenServer `{:reply, ...}` semantics;
+- opaque tags return to `handle_evaluation/3` but are not automatically logged;
+- every request gets a private wrapper-owned `Pristine.Cancellation` token;
+- caller-supplied cancellation is mirrored into that private token by a temporary
+  Pristine watcher, so the caller token is never mutated by the server;
+- the wrapper traps exits so orderly supervisor shutdown enters cleanup;
+- the watcher is stopped and the private token is cancelled before local task
+  shutdown;
+- `format_status/1` exposes inner state plus counts, not pending tags/client/task
+  internals.
+
+Review `guides/otp-server.md` and `test/system_one_sdk/otp_server_v040_test.exs`.
+
+### 5. Recursive decision patterns
+
+Added `guides/recursive-decisions.md` covering:
+
+- hierarchical descent;
+- bisection;
+- verify/repair over shrinking candidate sets;
+- coarse-to-fine cascades;
+- bounded clarifying conversations;
+- recursive OTP workflows.
+
+`examples/live_recursive_decisions.exs` now executes all five documented patterns
+with real responses and explicit termination bounds. Additional focused live scripts
+cover 0.3 composition/contracts/runtime controls/cancellation and the 0.4 OTP facade;
+`examples/README.md` contains the feature-to-example/test coverage matrix and finite
+request-count bounds.
+
+### 6. Jev credit
+
+README Acknowledgements now credits:
+
+https://github.com/dannote/jev
+
+The credit is specific to OTP process composition, opaque in-flight correlation,
+recursive workflows, per-answer telemetry, and architecture gates. It explicitly
+states that SystemOneSDK did not copy Jev's transport/global-supervisor design.
+
+## Release/version/docs work
+
+The source release version is bumped to 0.4.0 in:
+
+- root `mix.exs`;
+- `SystemOneSDK.version/0`;
+- README install/current-release text;
+- committed JSON Schema release markers;
+- release consistency tests;
+- cheatsheet and current getting-started/example docs;
+- CHANGELOG;
+- 0.4 migration/implementation docs.
+
+Historical 0.2/0.3 release notes and migration material remain historical and
+must not be globally rewritten.
+
+## Target-host verification sequence
+
+Run from a clean checkout with the pinned maintenance-only bootstrap described
+above. Do not substitute sibling runtime sources for release verification.
+
+```bash
+mix deps.get
+mix typesafe.prereq
+mix format
+mix format --check-formatted
+mix compile --warnings-as-errors
+mix test --warnings-as-errors
+mix reach.check --arch --smells
+mix credo --strict
+mix dialyzer
+mix docs --warnings-as-errors
+mix typesafe.schema.verify
+mix typesafe.verify --project-root .
+mix hex.build --unpack
+mix ci
+```
+
+Then review the formatter diff. Formatting may touch files written in this
+static environment; keep only legitimate formatting changes.
+
+### Required focused tests
+
+At minimum verify:
+
+```bash
+mix test test/system_one_sdk/semantic_telemetry_test.exs
+mix test test/system_one_sdk/semantic_response_test.exs
+mix test test/system_one_sdk/otp_server_v040_test.exs
+mix test test/system_one_sdk/release_consistency_test.exs
+```
+
+### OTP facade focused coverage
+
+`test/system_one_sdk/otp_server_v040_test.exs` now covers the happy path,
+`max_in_flight` rejection before transport, out-of-order caller correlation,
+server/request option merge, duplicate-option rejection before transport,
+caller-token cancellation propagation through the private request token, saturated
+TaskSupervisor normalization, recursive `handle_evaluation/3`, caller-token
+ownership during server shutdown, status projection, and missing-supervisor setup.
+
+On the BEAM, pay particular attention to cancellation races and supervisor shutdown.
+If an execution-path exception can escape `Evaluation.run/4` in the real Pristine
+stack, add a focused test proving it is normalized to the OTP worker-exit path and
+does not crash the wrapped server. Also confirm `:sys.get_status/1` / Observer output
+never exposes pending tags, API keys, cancellation tokens, or task structs.
+
+### Telemetry checks
+
+Confirm event ordering is start -> answer events -> stop for a successful call.
+Confirm unknown future answers do not emit a semantic answer event. Confirm no
+question key/label is present in metadata/measurements.
+
+### Reach check
+
+If Reach reports a real pre-existing dependency violation, do not weaken the
+boundary just to make the gate green. First determine whether the module was
+misclassified in `.reach.exs` or the dependency actually crosses the intended
+semantic/runtime boundary. Generated modules and plain data structs should stay
+outside the modeled layers unless there is a clear reason to include them.
+
+## Live gates
+
+Only after offline gates are green and with an explicit real credential:
+
+```bash
+mix test --include live --warnings-as-errors
+mix run examples/live_composition_contracts.exs
+mix run examples/live_runtime_controls.exs
+mix run examples/live_observability.exs
+mix run examples/live_otp_server.exs
+mix run examples/live_recursive_decisions.exs
+# Full finite suite (including evaluation workflow); see examples/README.md for cost bound:
+bash examples/run_all.sh
+```
+
+Live success does not prove calibration, transport queue bounds, or remote
+cancellation semantics.
+
+## Pristine source verification
+
+Verified directly in `deps/pristine` from Hex 0.4.0, with the committed lockfile:
+
+- `Pristine.Cancellation.new/0`, `cancel/1`, `validate/1`, `watch/2` and
+  `stop_watcher/1`;
+- `Pristine.RuntimeCapabilities.transport/1`;
+- `Pristine.execute_request/3` and the existing generated/client path;
+- the unchanged `{:pristine, "~> 0.4.0"}` runtime requirement.
+
+The original attachment named `pristine_sdk.xml` was identical to the SystemOneSDK
+baseline, SHA-256
+`c3279fb98ae60f9a0920ef48e5d8fd7332f3fd37bb379361b3817bae8b4bca0a`.
+It was not used as dependency compatibility evidence.
+
+## Packaging/release checks
+
+Inspect the unpacked Hex package and confirm it contains the new runtime module,
+guides, examples and 0.4 implementation record, while checkout-only `.reach.exs`
+and dev/test tooling remain non-runtime concerns as intended.
+
+Do not publish or tag until all applicable gates are green. After the follow-on
+QC is green, update `VERIFICATION.md` with exact observed results, then commit and
+push the ordinary development/release branch so the normal push-triggered GitHub
+CI runs for that exact commit. Suggested follow-on commit message:
+
+```text
+feat: complete 0.4 live examples and endpoint selection
+```
+
+The follow-on authorization includes finishing QC, committing, and pushing the
+branch. It does **not** include Hex publication or creation/push of `v0.4.0`; those
+remain separate maintainer release steps after final-commit CI is green.
