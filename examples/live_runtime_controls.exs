@@ -28,6 +28,8 @@ prepared =
       ])
   )
 
+# The official TypeSafe endpoint rejects unknown top-level request fields.
+# Test protected-header handling independently from provider-specific body extensions.
 response =
   SystemOneSDK.evaluate!(
     client,
@@ -38,8 +40,7 @@ response =
     extra_headers: %{
       "authorization" => "Bearer this-value-must-never-win",
       "x-example-purpose" => "typesafe-live-runtime-controls"
-    },
-    extra_body: %{example_context: %{source: "live-runtime-controls"}}
+    }
   )
 
 Live.show("Protected-header live call", %{
@@ -75,8 +76,7 @@ legacy =
     timeout_ms: 10_000,
     retry: false,
     extra_body: %{
-      state: "This replacement legacy state is a duplicate invoice charge.",
-      example_context: "legacy-last-write-wins"
+      state: "This replacement legacy state is a duplicate invoice charge."
     }
   )
 
@@ -84,7 +84,7 @@ Live.show("Legacy system_one extra_body merge path", %{
   answer_keys: Map.keys(legacy.answers),
   metadata: Response.metadata(legacy),
   note:
-    "Legacy system_one retains last-write-wins extra_body; semantic evaluate protects state/model/questions."
+    "Legacy system_one retains last-write-wins extra_body for recognized wire fields; semantic evaluate protects state/model/questions."
 })
 
 capabilities = RuntimeCapabilities.report(client)
