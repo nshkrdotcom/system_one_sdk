@@ -61,12 +61,16 @@ defmodule SystemOneBumblebee.Models.Laya.Tokenization do
 
   @spec load(Path.t()) :: {:ok, t()} | {:error, term()}
   def load(assets_directory) when is_binary(assets_directory) do
+    assets_directory
+    |> Path.expand()
+    |> Path.join("tokenizer/tokenizer.json")
+    |> load_file()
+  end
+
+  @spec load_file(Path.t()) :: {:ok, t()} | {:error, term()}
+  def load_file(tokenizer_path) when is_binary(tokenizer_path) do
     tokenizer_path =
-      Path.join([
-        Path.expand(assets_directory),
-        "tokenizer",
-        "tokenizer.json"
-      ])
+      Path.expand(tokenizer_path)
 
     with true <- File.regular?(tokenizer_path),
          {:ok, native} <- NativeTokenizer.from_file(tokenizer_path),

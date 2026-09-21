@@ -19,44 +19,153 @@ defmodule SystemOneBumblebee.Artifacts do
 
   `hf_hub` owns download/cache mechanics. `crucible_safetensors` independently
   verifies file hashes and, when supplied, validates SafeTensors header manifests.
+
+  Applications that already stage an immutable revision may pass `:local_root`.
+  The same committed SHA-256 and tensor-manifest checks are applied to files
+  under that directory; local staging never bypasses artifact verification.
   """
 
   alias SystemOneBumblebee.ArtifactPin
   alias SystemOneBumblebee.Artifacts.Prepared
 
-  @spec prepare(ArtifactPin.t() | nil, keyword()) :: {:ok, Prepared.t()} | {:error, term()}
+  @spec prepare(ArtifactPin.t() | nil, keyword()) ::
+          {:ok, Prepared.t()} | {:error, term()}
   def prepare(pin, opts \\ [])
 
-  def prepare(nil, _opts), do: {:ok, %Prepared{pin: nil, files: %{}, manifests: %{}}}
+  def prepare(nil, _opts) do
+    {:ok,
+     %Prepared{
+       pin: nil,
+       files: %{},
+       manifests: %{}
+     }}
+  end
 
-  def prepare(%ArtifactPin{} = pin, opts) when is_list(opts) do
-    token = Keyword.get(opts, :token)
-    force_download = Keyword.get(opts, :force_download, false)
+  def prepare(%ArtifactPin{} = pin, opts)
+      when is_list(opts) do
+    token =
+      Keyword.get(
+        opts,
+        :token
+      )
 
-    pin.files
-    |> Enum.reduce_while({:ok, %{}, %{}}, fn file, {:ok, paths, manifests} ->
-      case prepare_file(pin, file, token, force_download) do
-        {:ok, path, manifest_report} ->
-          {:cont,
-           {:ok, Map.put(paths, file.path, path),
-            maybe_put(manifests, file.path, manifest_report)}}
+    force_download =
+      Keyword.get(
+        opts,
+        :force_download,
+        false
+      )
 
-        {:error, reason} ->
-          {:halt, {:error, {:artifact_prepare_failed, file.path, reason}}}
-      end
-    end)
-    |> case do
-      {:ok, paths, manifests} ->
-        {:ok, %Prepared{pin: pin, files: paths, manifests: manifests}}
+    case local_root(
+           Keyword.get(
+             opts,
+             :local_root
+           )
+         ) do
+      {:ok, root} ->
+        prepare_files(
+          pin,
+          token,
+          force_download,
+          root
+        )
 
-      error ->
+      {:error, _} = error ->
         error
     end
   end
 
-  def prepare(other, _opts), do: {:error, {:invalid_artifact_pin, other}}
+  def prepare(other, _opts) do
+    {:error, {:invalid_artifact_pin, other}}
+  end
 
-  defp prepare_file(pin, file, token, force_download) do
+  defp prepare_files(
+         pin,
+         token,
+         force_download,
+         local_root
+       ) do
+    result =
+      Enum.reduce_while(
+        pin.files,
+        {:ok, %{}, %{}},
+        fn file, acc ->
+          prepare_file_entry(
+            file,
+            acc,
+            pin,
+            token,
+            force_download,
+            local_root
+          )
+        end
+      )
+
+    finalize_prepared(
+      result,
+      pin
+    )
+  end
+
+  defp prepare_file_entry(
+         file,
+         {:ok, paths, manifests},
+         pin,
+         token,
+         force_download,
+         local_root
+       ) do
+    case prepare_file(
+           pin,
+           file,
+           token,
+           force_download,
+           local_root
+         ) do
+      {:ok, path, manifest_report} ->
+        {:cont,
+         {:ok,
+          Map.put(
+            paths,
+            file.path,
+            path
+          ),
+          maybe_put(
+            manifests,
+            file.path,
+            manifest_report
+          )}}
+
+      {:error, reason} ->
+        {:halt, {:error, {:artifact_prepare_failed, file.path, reason}}}
+    end
+  end
+
+  defp finalize_prepared(
+         {:ok, paths, manifests},
+         pin
+       ) do
+    {:ok,
+     %Prepared{
+       pin: pin,
+       files: paths,
+       manifests: manifests
+     }}
+  end
+
+  defp finalize_prepared(
+         {:error, _} = error,
+         _pin
+       ),
+       do: error
+
+  defp prepare_file(
+         pin,
+         file,
+         token,
+         force_download,
+         nil
+       ) do
     download_opts = [
       repo_id: pin.repo_id,
       repo_type: pin.repo_type,
@@ -66,27 +175,145 @@ defmodule SystemOneBumblebee.Artifacts do
       force_download: force_download
     ]
 
-    download_opts = if token, do: Keyword.put(download_opts, :token, token), else: download_opts
+    download_opts =
+      if token do
+        Keyword.put(
+          download_opts,
+          :token,
+          token
+        )
+      else
+        download_opts
+      end
 
-    with {:ok, path} <- HfHub.Download.hf_hub_download(download_opts),
-         {:ok, _digest} <- CrucibleSafetensors.Checksum.verify_file(path, file.sha256),
-         {:ok, report} <- validate_manifest(path, file) do
-      {:ok, path, report}
+    case HfHub.Download.hf_hub_download(download_opts) do
+      {:ok, path} ->
+        verified_path(
+          path,
+          file
+        )
+
+      {:error, _} = error ->
+        error
     end
   end
 
-  defp validate_manifest(_path, %{tensors: nil}), do: {:ok, nil}
+  defp prepare_file(
+         _pin,
+         file,
+         _token,
+         _force_download,
+         local_root
+       ) do
+    path =
+      Path.join(
+        local_root,
+        file.path
+      )
 
-  defp validate_manifest(path, %{tensors: tensors, exact_tensors: exact?}) do
-    with {:ok, report} <- CrucibleSafetensors.Manifest.validate_file(path, tensors, exact: exact?),
+    if File.regular?(path) do
+      verified_path(
+        path,
+        file
+      )
+    else
+      {:error, {:local_artifact_missing, path}}
+    end
+  end
+
+  defp verified_path(
+         path,
+         file
+       ) do
+    case verify_path(
+           path,
+           file
+         ) do
+      {:ok, report} ->
+        {:ok, path, report}
+
+      {:error, _} = error ->
+        error
+    end
+  end
+
+  defp verify_path(
+         path,
+         file
+       ) do
+    case CrucibleSafetensors.Checksum.verify_file(
+           path,
+           file.sha256
+         ) do
+      {:ok, _digest} ->
+        validate_manifest(
+          path,
+          file
+        )
+
+      {:error, _} = error ->
+        error
+    end
+  end
+
+  defp validate_manifest(
+         _path,
+         %{tensors: nil}
+       ),
+       do: {:ok, nil}
+
+  defp validate_manifest(
+         path,
+         %{
+           tensors: tensors,
+           exact_tensors: exact?
+         }
+       ) do
+    with {:ok, report} <-
+           CrucibleSafetensors.Manifest.validate_file(
+             path,
+             tensors,
+             exact: exact?
+           ),
          true <- report.valid? do
       {:ok, report}
     else
-      false -> {:error, :tensor_manifest_mismatch}
-      {:error, _} = error -> error
+      false ->
+        {:error, :tensor_manifest_mismatch}
+
+      {:error, _} = error ->
+        error
     end
   end
 
-  defp maybe_put(map, _key, nil), do: map
-  defp maybe_put(map, key, value), do: Map.put(map, key, value)
+  defp local_root(nil),
+    do: {:ok, nil}
+
+  defp local_root(path)
+       when is_binary(path) do
+    {:ok, Path.expand(path)}
+  end
+
+  defp local_root(value) do
+    {:error, {:invalid_local_artifact_root, value}}
+  end
+
+  defp maybe_put(
+         map,
+         _key,
+         nil
+       ),
+       do: map
+
+  defp maybe_put(
+         map,
+         key,
+         value
+       ) do
+    Map.put(
+      map,
+      key,
+      value
+    )
+  end
 end

@@ -197,7 +197,10 @@ defmodule SystemOneBumblebee.Models.Laya.Preprocessing do
   defp reverse_ok({:ok, values}), do: {:ok, Enum.reverse(values)}
   defp reverse_ok(error), do: error
 
-  defp value(map, key) do
+  defp value(%Jason.OrderedObject{values: values}, key),
+    do: pair_value(values, key)
+
+  defp value(map, key) when is_map(map) do
     Map.get(map, key) ||
       case key do
         "type" -> Map.get(map, :type)
