@@ -114,10 +114,10 @@ defmodule SystemOneSDK.Evaluation do
 
     with :ok <- RequestBudget.check(body, max_bytes),
          {:ok, response} <-
-           Client.system_one(
+           Client.system_one_prepared(
              client,
              state,
-             Prepared.encoded(prepared),
+             prepared,
              provider_opts
            ),
          {:ok, contract} <-

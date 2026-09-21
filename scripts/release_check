@@ -2,8 +2,8 @@
 set -euo pipefail
 root="$(cd "$(dirname "$0")/.." && pwd)"
 case "${1:-}" in
-  system_one_sdk|system_one_bumblebee|system_one_server) package="$1" ;;
-  *) echo "usage: $0 {system_one_sdk|system_one_bumblebee|system_one_server}" >&2; exit 64 ;;
+  system_one_contracts|system_one_sdk|system_one_bumblebee|system_one_server) package="$1" ;;
+  *) echo "usage: $0 {system_one_contracts|system_one_sdk|system_one_bumblebee|system_one_server}" >&2; exit 64 ;;
 esac
 cd "$root/packages/$package"
 mix run --no-start --no-compile --no-deps-check -e '

@@ -9,6 +9,7 @@ Full SDK gates: `mix deps.get`, `mix format --check-formatted`,
 
 From the root run `scripts/release_check PACKAGE` to reject local dependencies
 and build the Hex artifact. Inspect the archive, metadata, LICENSE and docs.
-The optional packages intentionally fail this gate until their development-only
-sibling dependencies become `{:system_one_sdk, "~> 0.6.0"}` after SDK publication.
-Runtime completion and full release review are required beyond this structural gate.
+Publish `system_one_contracts` first. Dependent packages intentionally fail the
+release gate while they still reference the sibling contracts path; replace it
+with `{:system_one_contracts, "~> 0.1.0"}` before their release. Runtime
+completion and full release review are required beyond this structural gate.

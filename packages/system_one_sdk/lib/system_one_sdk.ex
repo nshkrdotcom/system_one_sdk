@@ -4,7 +4,8 @@ defmodule SystemOneSDK do
 
   Use `evaluate/4` for validated questions, caller-key preservation and enriched
   answers, or `system_one/4` for the existing wire-oriented parity interface.
-  Both execute through the same generated operations and Pristine runtime.
+  Execution is selected by the configured client provider: hosted TypeSafe, a
+  generic System One HTTP endpoint, or an inference-side contracts provider.
   """
 
   alias SystemOneSDK.{Client, Models, SystemOne}

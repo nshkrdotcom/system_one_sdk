@@ -85,8 +85,14 @@ defmodule SystemOneSDK.Providers.TypeSafe do
   end
 
   @impl true
-  def capabilities(client),
-    do: TypeSafeAPISDK.RuntimeCapabilities.report(client)
+  def capabilities(client) do
+    client
+    |> TypeSafeAPISDK.RuntimeCapabilities.report()
+    |> Map.put(:system_one, %{
+      protocol: SystemOneContracts.protocol(),
+      capabilities: SystemOneContracts.Capabilities.core()
+    })
+  end
 
   defp convert_system_one(%TypeSafeAPISDK.SystemOneResponse{} = source) do
     case SystemOneResponse.decode(source.raw) do

@@ -1,5 +1,5 @@
 defmodule SystemOneSDK.Response do
-  @moduledoc "Answer accessors and bounded metadata for TypeSafe responses."
+  @moduledoc "Answer accessors and capped metadata for System One responses."
 
   alias SystemOneSDK.{ChoiceAnswer, ListModelsResponse, NoulAnswer, ScoreAnswer, SystemOneResponse}
 

@@ -1,8 +1,9 @@
 defmodule SystemOneSDK.Error do
   @moduledoc """
-  Normalized TypeSafe SDK error.
+  Normalized System One SDK error.
 
-  HTTP status mapping follows the supplied Python SDK: 400, 401, 403, 404, 422,
+  Hosted HTTP status mapping preserves the TypeSafe-compatible mapping: 400,
+  401, 403, 404, 422,
   429, and 5xx receive dedicated `type` values; other unsuccessful statuses use
   `:api_error`. Transport and response validation failures are distinct.
   """
@@ -50,7 +51,7 @@ defmodule SystemOneSDK.Error do
         }
 
   defexception type: :api_error,
-               message: "TypeSafe API error",
+               message: "System One provider error",
                status: nil,
                body: nil,
                headers: %{},

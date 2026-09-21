@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        package: [system_one_sdk, system_one_bumblebee, system_one_server]
+        package: [system_one_contracts, system_one_sdk, system_one_bumblebee, system_one_server]
     defaults:
       run:
         working-directory: packages/${{ matrix.package }}
@@ -42,16 +42,16 @@ jobs:
         run: mix test --warnings-as-errors
 
       - name: Credo
-        if: matrix.package == 'system_one_sdk'
+        if: matrix.package == 'system_one_contracts'
         run: mix credo --strict
 
       - name: Dialyzer
-        if: matrix.package == 'system_one_sdk'
+        if: matrix.package == 'system_one_contracts'
         run: mix dialyzer
 
       - name: Docs
         run: mix docs --warnings-as-errors
 
       - name: Hex package
-        if: matrix.package == 'system_one_sdk'
-        run: ../../scripts/release_check system_one_sdk
+        if: matrix.package == 'system_one_contracts'
+        run: ../../scripts/release_check system_one_contracts

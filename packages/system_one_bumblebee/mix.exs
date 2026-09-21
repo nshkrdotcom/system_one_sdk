@@ -43,8 +43,8 @@ defmodule SystemOneBumblebee.MixProject do
 
   defp deps do
     [
-      # Development only: replace with {:system_one_sdk, "~> 0.6.0"} before release.
-      {:system_one_sdk, path: "../system_one_sdk"},
+      # Development only: replace with {:system_one_contracts, "~> 0.1.0"} before release.
+      {:system_one_contracts, path: "../system_one_contracts"},
       {:ex_doc, "~> 0.40.4", only: :dev, runtime: false}
     ]
   end

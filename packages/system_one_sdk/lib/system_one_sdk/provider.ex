@@ -20,11 +20,22 @@ defmodule SystemOneSDK.Provider do
   @callback system_one(
               provider_client(),
               term(),
-              map(),
+              term(),
               keyword()
             ) ::
               {:ok, SystemOneResponse.t()}
               | {:error, term()}
+
+  @callback system_one_prepared(
+              provider_client(),
+              term(),
+              SystemOneSDK.Prepared.t(),
+              keyword()
+            ) ::
+              {:ok, SystemOneResponse.t()}
+              | {:error, term()}
+
+  @optional_callbacks system_one_prepared: 4
 
   @callback list_models(provider_client(), keyword()) ::
               {:ok, ListModelsResponse.t()}

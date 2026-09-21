@@ -123,6 +123,20 @@ defmodule SystemOneSDK.Client do
   end
 
   @doc false
+  def system_one_prepared(%__MODULE__{} = client, state, prepared, opts \\ []) do
+    if function_exported?(client.provider, :system_one_prepared, 4) do
+      client.provider.system_one_prepared(client.provider_client, state, prepared, opts)
+    else
+      client.provider.system_one(
+        client.provider_client,
+        state,
+        SystemOneSDK.Prepared.encoded(prepared),
+        opts
+      )
+    end
+  end
+
+  @doc false
   def list_models(%__MODULE__{} = client, opts \\ []) do
     client.provider.list_models(client.provider_client, opts)
   end

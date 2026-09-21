@@ -31,6 +31,7 @@ defmodule SystemOneSDK.MixProject do
 
   defp deps do
     [
+      {:system_one_contracts, path: "../system_one_contracts"},
       {:pristine, "~> 0.4.0"},
       {:typesafe_api_sdk, "~> 0.1.0"},
       {:jason, "~> 1.4.5"},
@@ -44,7 +45,8 @@ defmodule SystemOneSDK.MixProject do
   end
 
   defp description do
-    "Provider-neutral Elixir SDK for System One semantics, evaluation, batching, telemetry, and OTP integration."
+    "Provider-neutral Elixir SDK for System One semantics, evaluation, batching, " <>
+      "telemetry, and OTP integration."
   end
 
   defp package do
@@ -73,6 +75,8 @@ defmodule SystemOneSDK.MixProject do
         "guides/getting-started.md",
         {"examples/README.md", title: "Live Example Catalog", filename: "live-example"},
         "guides/client-configuration.md",
+        "guides/providers-and-contracts.md",
+        "guides/generic-endpoints.md",
         "guides/system-one-and-questions.md",
         "guides/models.md",
         "guides/errors-and-retries.md",
@@ -99,6 +103,8 @@ defmodule SystemOneSDK.MixProject do
         "Start Here": ["README.md", "guides/index.md", "guides/getting-started.md"],
         Usage: [
           "guides/client-configuration.md",
+          "guides/providers-and-contracts.md",
+          "guides/generic-endpoints.md",
           "guides/system-one-and-questions.md",
           "guides/models.md",
           "guides/errors-and-retries.md"
@@ -150,6 +156,7 @@ defmodule SystemOneSDK.MixProject do
           SystemOneSDK.OTP.Server
         ],
         "Testing and Contracts": [
+          SystemOneSDK.Conformance,
           SystemOneSDK.Test,
           SystemOneSDK.Test.ContractError,
           SystemOneSDK.Schema
@@ -157,6 +164,8 @@ defmodule SystemOneSDK.MixProject do
         "Client and Operations": [
           SystemOneSDK,
           SystemOneSDK.Client,
+          SystemOneSDK.Providers.Contract,
+          SystemOneSDK.Providers.Endpoint,
           SystemOneSDK.SystemOne,
           SystemOneSDK.Models
         ],

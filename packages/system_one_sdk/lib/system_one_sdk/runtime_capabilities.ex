@@ -1,10 +1,9 @@
 defmodule SystemOneSDK.RuntimeCapabilities do
   @moduledoc """
-  Fail-closed TypeSafe-facing view of Pristine transport capabilities.
+  Fail-closed runtime capability view across System One providers.
 
-  Discovery delegates exclusively to `Pristine.RuntimeCapabilities.transport/1`.
-  TypeSafe does not infer support from adapter names or optional callbacks and
-  never exposes transport context/options through this report.
+  Client providers report capabilities through the provider contract. Direct
+  Pristine clients/contexts continue to use `Pristine.RuntimeCapabilities`.
   """
 
   alias SystemOneSDK.{Client, Error}
@@ -22,23 +21,19 @@ defmodule SystemOneSDK.RuntimeCapabilities do
   def names, do: @capabilities
 
   @spec report(Client.t() | Pristine.Client.t() | Pristine.Core.Context.t()) :: map()
+  def report(%Client{} = client) do
+    client
+    |> Client.capabilities()
+    |> normalize_client_report()
+  end
+
   def report(source) do
     pristine = Pristine.RuntimeCapabilities.transport(pristine_source(source))
 
-    runtime =
-      Map.new(@capabilities, fn capability ->
-        {capability, Map.get(pristine.capabilities, capability, %{status: :unverified})}
-      end)
-
     %{
       transport: inspect(pristine.adapter),
-      runtime: runtime,
-      sdk: %{
-        batch_concurrency: :bounded_per_enumeration,
-        batch_queue: :lazy_enumeration,
-        ordered_prefetch: :bounded_windows,
-        batch_cancellation: :shared_pristine_token
-      },
+      runtime: normalize_runtime(pristine.capabilities),
+      sdk: sdk_capabilities(),
       assurance: :pristine_transport_contract
     }
   end
@@ -85,7 +80,38 @@ defmodule SystemOneSDK.RuntimeCapabilities do
     end
   end
 
-  defp pristine_source(%Client{pristine_client: %Pristine.Client{} = client}), do: client
+  defp normalize_client_report(%{runtime: runtime} = report) when is_map(runtime) do
+    report
+    |> Map.put(:runtime, normalize_runtime(runtime))
+    |> Map.put_new(:sdk, sdk_capabilities())
+  end
+
+  defp normalize_client_report(report) when is_map(report) do
+    %{
+      transport: Map.get(report, :transport),
+      runtime: normalize_runtime(%{}),
+      system_one: report,
+      sdk: sdk_capabilities(),
+      assurance: Map.get(report, :assurance, :provider_contract)
+    }
+  end
+
+  defp normalize_runtime(runtime) do
+    Map.new(@capabilities, fn capability ->
+      {capability, Map.get(runtime, capability, %{status: :unverified})}
+    end)
+  end
+
+  defp sdk_capabilities do
+    %{
+      batch_concurrency: :limited_per_enumeration,
+      batch_queue: :lazy_enumeration,
+      ordered_prefetch: :limited_windows,
+      batch_cancellation: :shared_pristine_token
+    }
+  end
+
   defp pristine_source(%Pristine.Client{} = client), do: client
   defp pristine_source(%Pristine.Core.Context{} = context), do: context
+
 end

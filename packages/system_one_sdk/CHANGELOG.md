@@ -4,7 +4,12 @@
 
 - Move the SDK intact into an independent Poncho package.
 - Use published TypeSafe dependencies without workspace bootstrapping.
-- Establish optional native inference and HTTP package scaffolds; runtime work and v1 contracts/conformance remain upcoming.
+- Split provider-neutral wire/inference contracts into the sibling `system_one_contracts` package.
+- Add `SystemOneSDK.Providers.Contract` for in-process inference providers without coupling them to the rich SDK.
+- Add `SystemOneSDK.Providers.Endpoint` for generic System One v1 HTTP endpoints over Pristine.
+- Add reusable `SystemOneSDK.Conformance` coverage for model discovery, Noul, ordered Choice, Score and semantic enrichment.
+- Add an optional prepared-provider callback so native adapters can preserve exact prepared question ordering without breaking existing providers.
+- Make model metadata provider-neutral with optional description/release date plus capabilities and metadata.
 
 
 All notable changes to SystemOneSDK are documented here.

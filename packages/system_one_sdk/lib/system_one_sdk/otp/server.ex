@@ -1,6 +1,6 @@
 defmodule SystemOneSDK.OTP.Server do
   @moduledoc """
-  Bounded OTP facade for asynchronous TypeSafe evaluations inside a GenServer.
+  Capped OTP facade for asynchronous System One evaluations inside a GenServer.
 
   `use SystemOneSDK.OTP.Server` keeps ordinary GenServer callbacks in the caller
   module and adds one callback, `handle_evaluation/3`. Return
@@ -289,7 +289,7 @@ defmodule SystemOneSDK.OTP.Server do
         if map_size(state.pending) >= state.max_in_flight do
           overloaded = %Error{
             type: :runtime_capability,
-            message: "TypeSafe OTP server max_in_flight limit reached",
+            message: "System One OTP server max_in_flight limit reached",
             details: %{scope: :otp_server, max_in_flight: state.max_in_flight}
           }
 
@@ -356,7 +356,7 @@ defmodule SystemOneSDK.OTP.Server do
 
     error = %Error{
       type: :runtime_capability,
-      message: "TypeSafe OTP task supervisor rejected evaluation",
+      message: "System One OTP task supervisor rejected evaluation",
       details: %{scope: :otp_server, capability: :task_supervisor}
     }
 

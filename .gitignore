@@ -16,6 +16,7 @@ tmp/
 .env
 .env.*
 !.env.example
+system_one_contracts-*/
 system_one_sdk-*/
 system_one_bumblebee-*/
 system_one_server-*/

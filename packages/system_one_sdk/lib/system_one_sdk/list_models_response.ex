@@ -1,5 +1,5 @@
 defmodule SystemOneSDK.ListModelsResponse do
-  @moduledoc "Typed list of models available to the account."
+  @moduledoc "Typed list of System One models available from a provider."
 
   alias SystemOneSDK.{Error, ModelMetadata, TransportResponse}
 
@@ -79,25 +79,68 @@ defmodule SystemOneSDK.ListModelsResponse do
   end
 
   defp decode_model(raw, index) when is_map(raw) do
-    with {:ok, name} <- string_field(raw, "name", index),
-         {:ok, description} <- string_field(raw, "description", index),
-         {:ok, release_date} <- string_field(raw, "release_date", index) do
-      {:ok, %ModelMetadata{name: name, description: description, release_date: release_date}}
+    with {:ok, name} <- required_string(raw, "name", index),
+         {:ok, description} <- optional_string(raw, "description", index),
+         {:ok, release_date} <- optional_string(raw, "release_date", index),
+         {:ok, capabilities} <- capabilities(raw, index),
+         {:ok, metadata} <- metadata(raw, index) do
+      {:ok,
+       %ModelMetadata{
+         name: name,
+         description: description,
+         release_date: release_date,
+         capabilities: capabilities,
+         metadata: metadata
+       }}
     end
   end
 
   defp decode_model(raw, index),
     do: {:error, Error.response_validation("models[#{index}]", raw)}
 
-  defp string_field(map, key, index) do
-    value = Map.get(map, key) || Map.get(map, known_atom_key(key))
-
-    if is_binary(value),
-      do: {:ok, value},
-      else: {:error, Error.response_validation("models[#{index}].#{key}", map)}
+  defp required_string(map, key, index) do
+    case value(map, key) do
+      value when is_binary(value) and value != "" -> {:ok, value}
+      _ -> {:error, Error.response_validation("models[#{index}].#{key}", map)}
+    end
   end
 
+  defp optional_string(map, key, index) do
+    case value(map, key) do
+      nil -> {:ok, nil}
+      value when is_binary(value) -> {:ok, value}
+      _ -> {:error, Error.response_validation("models[#{index}].#{key}", map)}
+    end
+  end
+
+  defp capabilities(map, index) do
+    case value(map, "capabilities") do
+      nil ->
+        {:ok, []}
+
+      capabilities when is_list(capabilities) ->
+        if Enum.all?(capabilities, &(is_binary(&1) and String.trim(&1) != "")),
+          do: {:ok, Enum.uniq(capabilities)},
+          else: {:error, Error.response_validation("models[#{index}].capabilities", map)}
+
+      _ ->
+        {:error, Error.response_validation("models[#{index}].capabilities", map)}
+    end
+  end
+
+  defp metadata(map, index) do
+    case value(map, "metadata") do
+      nil -> {:ok, %{}}
+      metadata when is_map(metadata) and not is_struct(metadata) -> {:ok, metadata}
+      _ -> {:error, Error.response_validation("models[#{index}].metadata", map)}
+    end
+  end
+
+  defp value(map, key), do: Map.get(map, key) || Map.get(map, known_atom_key(key))
   defp known_atom_key("name"), do: :name
   defp known_atom_key("description"), do: :description
   defp known_atom_key("release_date"), do: :release_date
+  defp known_atom_key("capabilities"), do: :capabilities
+  defp known_atom_key("metadata"), do: :metadata
+  defp known_atom_key(_), do: :__system_one_missing_key__
 end

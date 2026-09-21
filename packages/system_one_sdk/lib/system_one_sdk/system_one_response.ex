@@ -94,7 +94,7 @@ defmodule SystemOneSDK.SystemOneResponse do
           key: id,
           term: answers,
           message:
-            "no TypeSafe answer for #{inspect(id)}; available IDs: #{inspect(Enum.sort(Map.keys(answers)))}"
+            "no System One answer for #{inspect(id)}; available IDs: #{inspect(Enum.sort(Map.keys(answers)))}"
     end
   end
 
