@@ -1,3 +1,18 @@
+defmodule SystemOneBumblebee.Artifacts.Prepared do
+  @moduledoc "Verified local artifact paths supplied to a model adapter."
+
+  alias SystemOneBumblebee.ArtifactPin
+
+  @enforce_keys [:pin, :files, :manifests]
+  defstruct [:pin, :files, :manifests]
+
+  @type t :: %__MODULE__{
+          pin: ArtifactPin.t() | nil,
+          files: %{String.t() => Path.t()},
+          manifests: %{String.t() => map()}
+        }
+end
+
 defmodule SystemOneBumblebee.Artifacts do
   @moduledoc """
   Fetches and verifies immutable model files before an adapter allocates tensors.
@@ -7,7 +22,7 @@ defmodule SystemOneBumblebee.Artifacts do
   """
 
   alias SystemOneBumblebee.ArtifactPin
-  alias __MODULE__.Prepared
+  alias SystemOneBumblebee.Artifacts.Prepared
 
   @spec prepare(ArtifactPin.t() | nil, keyword()) :: {:ok, Prepared.t()} | {:error, term()}
   def prepare(pin, opts \\ [])
@@ -23,7 +38,8 @@ defmodule SystemOneBumblebee.Artifacts do
       case prepare_file(pin, file, token, force_download) do
         {:ok, path, manifest_report} ->
           {:cont,
-           {:ok, Map.put(paths, file.path, path), maybe_put(manifests, file.path, manifest_report)}}
+           {:ok, Map.put(paths, file.path, path),
+            maybe_put(manifests, file.path, manifest_report)}}
 
         {:error, reason} ->
           {:halt, {:error, {:artifact_prepare_failed, file.path, reason}}}
@@ -73,19 +89,4 @@ defmodule SystemOneBumblebee.Artifacts do
 
   defp maybe_put(map, _key, nil), do: map
   defp maybe_put(map, key, value), do: Map.put(map, key, value)
-end
-
-defmodule SystemOneBumblebee.Artifacts.Prepared do
-  @moduledoc "Verified local artifact paths supplied to a model adapter."
-
-  alias SystemOneBumblebee.ArtifactPin
-
-  @enforce_keys [:pin, :files, :manifests]
-  defstruct [:pin, :files, :manifests]
-
-  @type t :: %__MODULE__{
-          pin: ArtifactPin.t() | nil,
-          files: %{String.t() => Path.t()},
-          manifests: %{String.t() => map()}
-        }
 end

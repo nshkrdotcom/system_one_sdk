@@ -70,7 +70,9 @@ defmodule SystemOneBumblebee.Adapters.Fake do
         probabilities =
           pairs
           |> Enum.with_index()
-          |> Map.new(fn {{key, _value}, index} -> {to_string(key), if(index == 0, do: 1.0, else: 0.0)} end)
+          |> Map.new(fn {{key, _value}, index} ->
+            {to_string(key), if(index == 0, do: 1.0, else: 0.0)}
+          end)
 
         {:ok,
          %{
@@ -88,12 +90,15 @@ defmodule SystemOneBumblebee.Adapters.Fake do
     if labels == [] do
       {:error, Error.invalid_request(["criteria"], "score criteria must not be empty")}
     else
-      legend = labels |> Enum.with_index() |> Map.new(fn {label, index} -> {to_string(index), label} end)
+      legend =
+        labels |> Enum.with_index() |> Map.new(fn {label, index} -> {to_string(index), label} end)
 
       probabilities =
         labels
         |> Enum.with_index()
-        |> Map.new(fn {_label, index} -> {to_string(index), if(index == 0, do: 1.0, else: 0.0)} end)
+        |> Map.new(fn {_label, index} ->
+          {to_string(index), if(index == 0, do: 1.0, else: 0.0)}
+        end)
 
       {:ok,
        %{

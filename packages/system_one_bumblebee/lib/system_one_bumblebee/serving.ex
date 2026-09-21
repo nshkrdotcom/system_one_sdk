@@ -31,7 +31,8 @@ defmodule SystemOneBumblebee.Serving do
     load_opts = Keyword.get(opts, :load_opts, [])
 
     with {:ok, artifacts} <- Artifacts.prepare(manifest.pin, load_opts),
-         {:ok, runtime} <- manifest.adapter.load(manifest, artifacts, profile, manifest.adapter_options) do
+         {:ok, runtime} <-
+           manifest.adapter.load(manifest, artifacts, profile, manifest.adapter_options) do
       {:ok,
        %{
          adapter: manifest.adapter,
@@ -44,7 +45,8 @@ defmodule SystemOneBumblebee.Serving do
     end
   end
 
-  @spec run(pid(), Request.t(), keyword()) :: {:ok, SystemOneContracts.V1.Response.t()} | {:error, term()}
+  @spec run(pid(), Request.t(), keyword()) ::
+          {:ok, term()} | {:error, term()}
   def run(pid, %Request{} = request, opts \\ []) when is_pid(pid) and is_list(opts) do
     with {:ok, snapshot} <- snapshot(pid) do
       metadata = %{
@@ -62,11 +64,9 @@ defmodule SystemOneBumblebee.Serving do
 
   @spec snapshot(pid()) :: {:ok, snapshot()} | {:error, term()}
   def snapshot(pid) when is_pid(pid) do
-    try do
-      {:ok, GenServer.call(pid, :snapshot)}
-    catch
-      :exit, reason -> {:error, {:serving_unavailable, reason}}
-    end
+    {:ok, GenServer.call(pid, :snapshot)}
+  catch
+    :exit, reason -> {:error, {:serving_unavailable, reason}}
   end
 
   @impl true

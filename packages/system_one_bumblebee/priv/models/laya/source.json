@@ -1,0 +1,9 @@
+{
+  "repository": "convaiinnovations/laya",
+  "revision": "c5d78730f3493e4fe16d61507ef4b78eef7318cf",
+  "upstream_code_repository": "https://github.com/NandhaKishorM/laya",
+  "upstream_code_revision": "6a5819129eb220570792e417e49723d697efd76f",
+  "encoder": "answerdotai/ModernBERT-large",
+  "upstream_version": "0.3.3",
+  "license": "Apache-2.0"
+}

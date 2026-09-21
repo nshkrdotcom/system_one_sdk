@@ -53,30 +53,42 @@ defmodule SystemOneBumblebee.ModelRegistry do
   end
 
   defp build(manifests) do
-    Enum.reduce_while(manifests, {:ok, %__MODULE__{models: %{}, aliases: %{}}}, fn manifest, {:ok, registry} ->
-      with false <- Map.has_key?(registry.models, manifest.name),
-           false <- Map.has_key?(registry.aliases, manifest.name),
-           {:ok, aliases} <- put_aliases(registry, manifest) do
-        {:cont,
-         {:ok,
-          %__MODULE__{
-            registry
-            | models: Map.put(registry.models, manifest.name, manifest),
-              aliases: aliases
-          }}}
-      else
-        true ->
-          reason =
-            if Map.has_key?(registry.models, manifest.name),
-              do: {:duplicate_model, manifest.name},
-              else: {:model_conflicts_with_alias, manifest.name}
+    Enum.reduce_while(
+      manifests,
+      {:ok, %__MODULE__{models: %{}, aliases: %{}}},
+      &put_manifest/2
+    )
+  end
 
-          {:halt, {:error, reason}}
+  defp put_manifest(manifest, {:ok, registry}) do
+    case model_name_available(registry, manifest.name) do
+      :ok -> put_manifest_with_aliases(registry, manifest)
+      {:error, reason} -> {:halt, {:error, reason}}
+    end
+  end
 
-        {:error, _} = error ->
-          {:halt, error}
-      end
-    end)
+  defp model_name_available(registry, name) do
+    cond do
+      Map.has_key?(registry.models, name) -> {:error, {:duplicate_model, name}}
+      Map.has_key?(registry.aliases, name) -> {:error, {:model_conflicts_with_alias, name}}
+      true -> :ok
+    end
+  end
+
+  defp put_manifest_with_aliases(%__MODULE__{} = registry, manifest) do
+    case put_aliases(registry, manifest) do
+      {:ok, aliases} ->
+        updated = %__MODULE__{
+          registry
+          | models: Map.put(registry.models, manifest.name, manifest),
+            aliases: aliases
+        }
+
+        {:cont, {:ok, updated}}
+
+      {:error, _} = error ->
+        {:halt, error}
+    end
   end
 
   defp put_aliases(registry, manifest) do

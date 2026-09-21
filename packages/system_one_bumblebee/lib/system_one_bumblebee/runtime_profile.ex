@@ -32,7 +32,8 @@ defmodule SystemOneBumblebee.RuntimeProfile do
   def new(attrs \\ []) when is_list(attrs) or is_map(attrs) do
     with {:ok, name} <- name(value(attrs, :name, :default)),
          {:ok, batch_size} <- positive(value(attrs, :batch_size, 1), :batch_size),
-         {:ok, sequence_length} <- optional_positive(value(attrs, :sequence_length), :sequence_length),
+         {:ok, sequence_length} <-
+           optional_positive(value(attrs, :sequence_length), :sequence_length),
          {:ok, defn_options} <- keyword(value(attrs, :defn_options, []), :defn_options),
          {:ok, serving_options} <- keyword(value(attrs, :serving_options, []), :serving_options) do
       {:ok,

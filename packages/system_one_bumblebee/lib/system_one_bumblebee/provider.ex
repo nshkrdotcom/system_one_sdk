@@ -3,7 +3,14 @@ defmodule SystemOneBumblebee.Provider do
 
   @behaviour SystemOneContracts.Provider
 
-  alias SystemOneBumblebee.{ModelManifest, ModelRegistry, RuntimeProfile, Serving, ServingSupervisor}
+  alias SystemOneBumblebee.{
+    ModelManifest,
+    ModelRegistry,
+    RuntimeProfile,
+    Serving,
+    ServingSupervisor
+  }
+
   alias SystemOneContracts.{Capabilities, Error}
   alias SystemOneContracts.V1.{ModelsResponse, Request, Response}
 
@@ -101,7 +108,9 @@ defmodule SystemOneBumblebee.Provider do
   end
 
   def system_one(%State{}, request, _opts),
-    do: {:error, Error.invalid_request([], "expected SystemOneContracts.V1.Request", %{value: request})}
+    do:
+      {:error,
+       Error.invalid_request([], "expected SystemOneContracts.V1.Request", %{value: request})}
 
   defp resolve_model(registry, model), do: ModelRegistry.resolve(registry, model)
 

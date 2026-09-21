@@ -2,6 +2,8 @@
 
 ## 0.1.0 — Unreleased
 
+- Add the pinned Laya 0.3.3 source identity, Apache-2.0 third-party notice, staged checkpoint intake, SafeTensors inventory, exact question rendering, qtype mapping, calibration formulas and System One output translation.
+
 - Establish independent package metadata, documentation and compile smoke coverage.
 - Depend on the small `system_one_contracts` seam rather than the rich client SDK.
 - Add the coherent released native graph: Nx 0.13, Axon 0.8 and Bumblebee 0.7.

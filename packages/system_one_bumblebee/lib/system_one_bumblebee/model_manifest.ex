@@ -6,8 +6,17 @@ defmodule SystemOneBumblebee.ModelManifest do
   alias SystemOneContracts.V1.Model
 
   @enforce_keys [:name, :adapter, :capabilities]
-  defstruct [:name, :adapter, :pin, :description, :release_date,
-             aliases: [], capabilities: [], metadata: %{}, adapter_options: []]
+  defstruct [
+    :name,
+    :adapter,
+    :pin,
+    :description,
+    :release_date,
+    aliases: [],
+    capabilities: [],
+    metadata: %{},
+    adapter_options: []
+  ]
 
   @type t :: %__MODULE__{
           name: String.t(),
@@ -157,7 +166,9 @@ defmodule SystemOneBumblebee.ModelManifest do
   defp metadata(value), do: {:error, {:invalid_metadata, value}}
 
   defp adapter_options(value) when is_list(value) do
-    if Keyword.keyword?(value), do: {:ok, value}, else: {:error, {:invalid_adapter_options, value}}
+    if Keyword.keyword?(value),
+      do: {:ok, value},
+      else: {:error, {:invalid_adapter_options, value}}
   end
 
   defp adapter_options(value), do: {:error, {:invalid_adapter_options, value}}

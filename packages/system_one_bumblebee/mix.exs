@@ -17,11 +17,12 @@ defmodule SystemOneBumblebee.MixProject do
       homepage_url: @package_url,
       deps: deps(),
       aliases: aliases(),
-      dialyzer: [plt_add_deps: :apps_direct],
+      dialyzer: [plt_add_deps: :apps_direct, plt_add_apps: [:mix]],
       package: [
         licenses: ["MIT"],
         links: %{"GitHub" => @package_url},
-        files: ~w(lib README.md CHANGELOG.md LICENSE mix.exs guides assets)
+        files:
+          ~w(lib priv README.md CHANGELOG.md LICENSE THIRD_PARTY_NOTICES.md mix.exs guides assets)
       ],
       docs: docs()
     ]
@@ -54,12 +55,12 @@ defmodule SystemOneBumblebee.MixProject do
       {:nx, "~> 0.13.1"},
       {:axon, "~> 0.8.1"},
       {:bumblebee, "~> 0.7.1"},
+      {:tokenizers, "~> 0.5.1"},
 
       # Dependency-prework repositories. These are intentionally local until
       # their prepared releases are published; release_check rejects paths.
       {:hf_hub, path: "../../../../North-Shore-AI/hf_hub_ex"},
       {:crucible_safetensors, path: "../../../../North-Shore-AI/crucible_safetensors"},
-
       {:jason, "~> 1.4.5"},
       {:telemetry, "~> 1.4.2"},
       {:ex_doc, "~> 0.40.4", only: [:dev, :test], runtime: false},
@@ -95,7 +96,9 @@ defmodule SystemOneBumblebee.MixProject do
         "guides/architecture.md",
         "guides/model-artifacts.md",
         "guides/runtime.md",
+        "guides/laya.md",
         "CHANGELOG.md",
+        {"THIRD_PARTY_NOTICES.md", title: "Third-party notices"},
         {"LICENSE", title: "License"}
       ],
       groups_for_modules: [
@@ -112,9 +115,15 @@ defmodule SystemOneBumblebee.MixProject do
           SystemOneBumblebee.ArtifactPin,
           SystemOneBumblebee.ArtifactPin.File,
           SystemOneBumblebee.Artifacts,
-          SystemOneBumblebee.Artifacts.Prepared
+          SystemOneBumblebee.Artifacts.Prepared,
+          SystemOneBumblebee.Models.Laya.Config,
+          SystemOneBumblebee.Models.Laya.Preprocessing,
+          SystemOneBumblebee.Models.Laya.Calibration,
+          SystemOneBumblebee.Models.Laya.Output,
+          SystemOneBumblebee.Models.Laya.Inventory,
+          SystemOneBumblebee.Models.Laya.Intake
         ],
-        "Testing": [SystemOneBumblebee.Adapters.Fake]
+        Testing: [SystemOneBumblebee.Adapters.Fake]
       ]
     ]
   end

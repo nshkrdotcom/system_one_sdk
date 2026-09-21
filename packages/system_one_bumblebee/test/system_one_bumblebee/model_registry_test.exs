@@ -18,7 +18,6 @@ defmodule SystemOneBumblebee.ModelRegistryTest do
     assert {:error, :model_not_found} = ModelRegistry.resolve(registry, "missing")
   end
 
-
   test "rejects a canonical model name that collides with an earlier alias" do
     assert {:error, {:model_conflicts_with_alias, "b"}} =
              ModelRegistry.new([
