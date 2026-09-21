@@ -2,5 +2,6 @@
 
 - [Architecture](architecture.md)
 - [Model Artifacts](model-artifacts.md)
+- [Runtime](runtime.md)
 
-Runtime implementation is upcoming. See the repository roadmap for sequencing.
+The provider/runtime core is implemented. Laya/ModernBERT is the next model-adapter gate.

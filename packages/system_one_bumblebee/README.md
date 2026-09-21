@@ -2,29 +2,68 @@
 
 # SystemOneBumblebee
 
-Optional native BEAM/Nx/Bumblebee implementation of System One inference.
+Native BEAM/Nx/Bumblebee implementation of System One inference.
 
-**0.1.0 is unpublished. Runtime implementation is under active development.**
-This scaffold has documentation and a module-load test, with no runtime API yet.
+**0.1.0 is unpublished and under active development.** The provider/runtime core is now implemented; Laya model parity is the next gate.
 
-This package will own native model artifacts, tensor loading, model adapters and Nx.Serving execution. It does not own shared wire/inference contracts, provider-specific hosted HTTP internals, or lifecycle management. Those belong to
-SystemOneContracts, TypeSafeAPISDK and external lifecycle tooling respectively.
+SystemOneBumblebee implements the inference-side `SystemOneContracts.Provider` boundary. It owns explicit model registration, immutable Hugging Face artifact pins, SHA-256 and SafeTensors manifest verification, model adapter loading, runtime profiles and long-lived resident model state. It does **not** own HTTP exposure, hosted credentials or service lifecycle management.
 
-## Intended installation (after publication)
+## Native dependency graph
 
-```elixir
-{:system_one_bumblebee, "~> 0.1.0"}
+The current coherent released stack is:
+
+```text
+system_one_contracts
+nx 0.13.x
+axon 0.8.x
+bumblebee 0.7.x
+hf_hub 0.4.x development source
+crucible_safetensors 0.2.x development source
+jason
+telemetry
 ```
 
-For development, run `mix deps.get` and `mix test` from this directory.
-The explicit `../system_one_contracts` path dependency is development-only. Replace it with
-`{:system_one_contracts, "~> 0.1.0"}` after the contracts package is published; `../../scripts/release_check system_one_bumblebee` refuses path dependencies.
+EXLA is intentionally **not** a required production dependency. The embedding application supplies backend/compiler choices through `SystemOneBumblebee.RuntimeProfile`.
+
+## Provider core
+
+```elixir
+alias SystemOneBumblebee.{Adapters.Fake, Provider, RuntimeProfile}
+
+{:ok, provider_state} =
+  Provider.new(
+    models: %{
+      "fixture" => %{
+        adapter: Fake,
+        aliases: ["fixture-alias"]
+      }
+    },
+    runtime_profile: RuntimeProfile.test()
+  )
+
+{:ok, catalog} = Provider.list_models(provider_state, [])
+```
+
+`SystemOneBumblebee.Adapters.Fake` exists only for deterministic offline contract tests. Production models use architecture-specific adapters.
+
+## Artifact identity
+
+Production model manifests use `SystemOneBumblebee.ArtifactPin`:
+
+- full 40-character Hugging Face commit revision;
+- SHA-256 for every required file;
+- optional exact SafeTensors tensor inventory;
+- no request-driven arbitrary repository selection.
+
+`HfHub.Download` owns download/cache mechanics. `CrucibleSafetensors` independently verifies hashes and checkpoint metadata before an adapter allocates tensors.
+
+## Development dependencies
+
+The repository currently uses local path dependencies for the unpublished `system_one_contracts`, `hf_hub` 0.4 and `crucible_safetensors` 0.2 development sources. `scripts/release_check system_one_bumblebee` intentionally refuses path dependencies. Replace them with Hex requirements only after those prepared releases are published.
 
 ## Next implementation
 
-Laya/ModernBERT, safetensors mapping, tokenizer parity, Python oracle fixtures, CPU and EXLA/GPU parity, resident Nx.Serving, then Qwen option/logit scoring.
-
-Bumblebee, Nx, Axon and EXLA are upcoming dependencies, pending the native dependency audit. No ML stack or model downloads are installed by this scaffold. This will execute real imported tensor weights on BEAM/Nx, not wrap a Python service.
+Laya is next: pin the exact upstream/model commits, record every file SHA-256, stage Python oracle fixtures, reproduce preprocessing, load ModernBERT through Bumblebee, implement the Laya-specific decision head/scorer/action path, account for every checkpoint tensor, then gate CPU parity before GPU parity.
 
 [Contracts](../system_one_contracts/README.md) · [SDK](../system_one_sdk/README.md) · [Bumblebee](../system_one_bumblebee/README.md) · [Server](../system_one_server/README.md) · [Repository](../../README.md)
 
