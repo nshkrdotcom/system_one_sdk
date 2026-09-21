@@ -15,7 +15,9 @@ defmodule SystemOneContracts.V1.Validation do
 
   def json(value, path) do
     case Jason.encode(value) do
-      {:ok, _} -> :ok
+      {:ok, _} ->
+        :ok
+
       {:error, reason} ->
         {:error, Error.invalid_request(path, "must be JSON-encodable", %{cause: reason})}
     end

@@ -192,8 +192,7 @@ defmodule SystemOneContracts.V1.Request do
             {:halt, {:error, Error.invalid_request(path, "contains an invalid object key")}}
 
           MapSet.member?(seen, wire_key) ->
-            {:halt,
-             {:error, Error.invalid_request(path ++ [wire_key], "duplicate normalized key")}}
+            {:halt, {:error, Error.invalid_request(path ++ [wire_key], "duplicate normalized key")}}
 
           true ->
             {:cont, {:ok, [{wire_key, value} | acc], MapSet.put(seen, wire_key)}}

@@ -58,14 +58,18 @@ defmodule SystemOneContracts.Conformance do
     end
   end
 
-  defp protocol(value) when value == SystemOneContracts.protocol(), do: :ok
-
   defp protocol(value) do
-    {:error,
-     Error.invalid_response(["capabilities", "protocol"], "does not match system-one/v1", %{
-       actual: value,
-       expected: SystemOneContracts.protocol()
-     })}
+    expected = SystemOneContracts.protocol()
+
+    if value == expected do
+      :ok
+    else
+      {:error,
+       Error.invalid_response(["capabilities", "protocol"], "does not match system-one/v1", %{
+         actual: value,
+         expected: expected
+       })}
+    end
   end
 
   defp normalize_capabilities(values) do
@@ -74,8 +78,7 @@ defmodule SystemOneContracts.Conformance do
         {:ok, names}
 
       {:error, _} ->
-        {:error,
-         Error.invalid_response(["capabilities"], "must contain capability names")}
+        {:error, Error.invalid_response(["capabilities"], "must contain capability names")}
     end
   end
 
@@ -137,8 +140,7 @@ defmodule SystemOneContracts.Conformance do
         error
 
       other ->
-        {:error,
-         Error.invalid_response([], "provider returned an invalid result", %{value: other})}
+        {:error, Error.invalid_response([], "provider returned an invalid result", %{value: other})}
     end
   rescue
     error -> {:error, Error.invalid_response([], "provider raised", %{cause: error})}
@@ -150,8 +152,7 @@ defmodule SystemOneContracts.Conformance do
     |> Response.decode()
   rescue
     error ->
-      {:error,
-       Error.invalid_response([], "provider returned an invalid response", %{cause: error})}
+      {:error, Error.invalid_response([], "provider returned an invalid response", %{cause: error})}
   end
 
   defp fixture_request(model) do

@@ -52,8 +52,7 @@ defmodule SystemOneContracts.V1.Response do
           String.trim(wire_key) == "" or not String.valid?(wire_key) or
               Map.has_key?(acc, wire_key) ->
             {:halt,
-             {:error,
-              Error.invalid_response(["answers"], "contains an invalid or duplicate key")}}
+             {:error, Error.invalid_response(["answers"], "contains an invalid or duplicate key")}}
 
           true ->
             case validate_answer(answer, wire_key) do
@@ -63,8 +62,7 @@ defmodule SystemOneContracts.V1.Response do
         end
 
       _entry, _acc ->
-        {:halt,
-         {:error, Error.invalid_response(["answers"], "answer keys must be strings")}}
+        {:halt, {:error, Error.invalid_response(["answers"], "answer keys must be strings")}}
     end)
   end
 

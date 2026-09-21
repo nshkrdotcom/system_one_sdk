@@ -63,10 +63,11 @@ defmodule SystemOneContracts.V1.Model do
 
   defp decode_capabilities(value) do
     case Capabilities.normalize(value) do
-      {:ok, capabilities} -> {:ok, capabilities}
+      {:ok, capabilities} ->
+        {:ok, capabilities}
+
       {:error, _} ->
-        {:error,
-         Error.invalid_response(["models", "capabilities"], "must be capability names")}
+        {:error, Error.invalid_response(["models", "capabilities"], "must be capability names")}
     end
   end
 
