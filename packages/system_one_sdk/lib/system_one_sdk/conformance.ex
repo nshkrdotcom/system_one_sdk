@@ -15,7 +15,8 @@ defmodule SystemOneSDK.Conformance do
       route:
         SystemOneSDK.choice(
           "Choose a route.",
-          [first: "First option", second: "Second option"]
+          first: "First option",
+          second: "Second option"
         ),
       intensity: SystemOneSDK.score("Rate intensity.", ["low", "high"])
     ]
@@ -85,8 +86,7 @@ defmodule SystemOneSDK.Conformance do
       response.answers[:route],
       response.answers[:intensity]
     } do
-      {%NoulAnswer{}, %ChoiceAnswer{option_order: [:first, :second]},
-       %ScoreAnswer{levels: levels}}
+      {%NoulAnswer{}, %ChoiceAnswer{option_order: [:first, :second]}, %ScoreAnswer{levels: levels}}
       when length(levels) == 2 ->
         :ok
 

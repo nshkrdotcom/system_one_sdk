@@ -77,7 +77,7 @@ defmodule SystemOneSDK.Providers.ContractTest do
 
     questions = [
       signal: SystemOneSDK.noul("Signal?"),
-      route: SystemOneSDK.choice("Route?", [z: "Z first", a: "A second"]),
+      route: SystemOneSDK.choice("Route?", z: "Z first", a: "A second"),
       intensity: SystemOneSDK.score("Intensity?", ["low", "high"])
     ]
 

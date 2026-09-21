@@ -113,5 +113,4 @@ defmodule SystemOneSDK.RuntimeCapabilities do
 
   defp pristine_source(%Pristine.Client{} = client), do: client
   defp pristine_source(%Pristine.Core.Context{} = context), do: context
-
 end

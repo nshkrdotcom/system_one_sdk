@@ -1,5 +1,5 @@
 defmodule SystemOneSDK.Providers.EndpointTest do
-  use ExUnit.Case, async: true
+  use ExUnit.Case, async: false
 
   alias SystemOneSDK.{Conformance, Test}
   alias SystemOneSDK.Providers.Endpoint
@@ -33,7 +33,7 @@ defmodule SystemOneSDK.Providers.EndpointTest do
              SystemOneSDK.evaluate(
                client,
                "strict ordering fixture",
-               route: SystemOneSDK.choice("Route?", [z: "Z first", a: "A second"])
+               route: SystemOneSDK.choice("Route?", z: "Z first", a: "A second")
              )
 
     assert response.answers.route.option_order == [:z, :a]
@@ -61,6 +61,25 @@ defmodule SystemOneSDK.Providers.EndpointTest do
   end
 
   test "generic endpoints may omit bearer auth" do
+    previous_api_key =
+      Application.get_env(:system_one_sdk, :api_key, :__system_one_missing__)
+
+    Application.put_env(
+      :system_one_sdk,
+      :api_key,
+      "typesafe-config-must-not-leak"
+    )
+
+    on_exit(fn ->
+      case previous_api_key do
+        :__system_one_missing__ ->
+          Application.delete_env(:system_one_sdk, :api_key)
+
+        value ->
+          Application.put_env(:system_one_sdk, :api_key, value)
+      end
+    end)
+
     client =
       Test.client(
         provider: Endpoint,
@@ -72,6 +91,9 @@ defmodule SystemOneSDK.Providers.EndpointTest do
 
     on_exit(fn -> Test.close(client) end)
 
+    assert client.provider_client.api_key == nil
+    assert client.provider_client.timeout_ms == 30_000
+
     assert {:ok, _} = SystemOneSDK.list_models(client)
     [request] = Test.requests(client)
 
@@ -81,5 +103,23 @@ defmodule SystemOneSDK.Providers.EndpointTest do
       end)
 
     refute Map.has_key?(headers, "authorization")
+  end
+
+  test "generic endpoints do not inherit TypeSafe endpoint or model defaults" do
+    assert_raise SystemOneSDK.Error, fn ->
+      SystemOneSDK.new_client(
+        provider: Endpoint,
+        api_key: nil,
+        model: "local-test"
+      )
+    end
+
+    assert_raise SystemOneSDK.Error, fn ->
+      SystemOneSDK.new_client(
+        provider: Endpoint,
+        api_key: nil,
+        base_url: "http://system-one.test.invalid"
+      )
+    end
   end
 end

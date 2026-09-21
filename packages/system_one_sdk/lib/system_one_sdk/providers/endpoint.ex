@@ -10,7 +10,7 @@ defmodule SystemOneSDK.Providers.Endpoint do
   @behaviour SystemOneSDK.Provider
 
   alias Pristine.Adapters.Auth.Bearer
-  alias SystemOneContracts.V1.{ModelsResponse, Response}
+  alias SystemOneContracts.V1.{ModelsResponse, Request, Response}
   alias SystemOneSDK.{ContractBridge, Error, RetryPolicy}
   alias SystemOneSDK.Providers.Endpoint.TransportResponse
 
@@ -77,9 +77,7 @@ defmodule SystemOneSDK.Providers.Endpoint do
     with {:ok, %TransportResponse{} = wrapped} <- execute(client, :get, "/v1/models", nil, opts),
          {:ok, contract_response} <- ModelsResponse.decode(wrapped.data),
          {:ok, response} <-
-           ContractBridge.models_from_contract(
-             attach_models_metadata(contract_response, wrapped)
-           ) do
+           ContractBridge.models_from_contract(attach_models_metadata(contract_response, wrapped)) do
       {:ok,
        %{
          response
@@ -117,7 +115,7 @@ defmodule SystemOneSDK.Providers.Endpoint do
              client,
              :post,
              "/v1/systemone",
-             SystemOneContracts.V1.Request.to_map(request),
+             Request.to_map(request),
              opts
            ),
          {:ok, contract_response} <- Response.decode(wrapped.data),
@@ -166,6 +164,8 @@ defmodule SystemOneSDK.Providers.Endpoint do
   end
 
   defp build_context(client) do
+    Code.ensure_loaded!(TransportResponse)
+
     Pristine.foundation_context(
       auth: [],
       base_url: client.base_url,
@@ -276,16 +276,26 @@ defmodule SystemOneSDK.Providers.Endpoint do
     uri = URI.parse(value)
 
     cond do
-      value == "" -> raise Error.configuration("base_url must not be blank")
+      value == "" ->
+        raise Error.configuration("base_url must not be blank")
+
       uri.scheme not in ["http", "https"] ->
         raise Error.configuration("base_url must use http or https")
+
       is_nil(uri.host) or uri.host == "" ->
         raise Error.configuration("base_url must include a host")
+
       not is_nil(uri.userinfo) ->
         raise Error.configuration("base_url must not contain URL credentials")
-      not is_nil(uri.query) -> raise Error.configuration("base_url must not contain a query string")
-      not is_nil(uri.fragment) -> raise Error.configuration("base_url must not contain a fragment")
-      true -> String.trim_trailing(value, "/")
+
+      not is_nil(uri.query) ->
+        raise Error.configuration("base_url must not contain a query string")
+
+      not is_nil(uri.fragment) ->
+        raise Error.configuration("base_url must not contain a fragment")
+
+      true ->
+        String.trim_trailing(value, "/")
     end
   end
 
@@ -311,11 +321,13 @@ defmodule SystemOneSDK.Providers.Endpoint do
   defp resolve_retry(nil), do: false
   defp resolve_retry(%RetryPolicy{} = retry), do: retry
   defp resolve_retry(value) when is_list(value) or is_map(value), do: RetryPolicy.new!(value)
+
   defp resolve_retry(other),
     do: raise(Error.configuration("invalid retry policy: #{inspect(other)}"))
 
   defp normalize_extra(nil), do: %{}
   defp normalize_extra(extra) when is_map(extra) and not is_struct(extra), do: extra
+
   defp normalize_extra(other),
     do: raise(ArgumentError, "extra_body must be a map, got: #{inspect(other)}")
 

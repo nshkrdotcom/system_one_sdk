@@ -76,7 +76,7 @@ defmodule SystemOneSDK.Client do
 
     ensure_provider!(provider)
 
-    provider_opts = provider_options(opts)
+    provider_opts = provider_options(opts, provider)
     provider_client = provider.new_client(provider_opts)
 
     response_contract =
@@ -162,18 +162,11 @@ defmodule SystemOneSDK.Client do
   @doc false
   def extra_headers(opts), do: TypeSafeAPISDK.Client.extra_headers(opts)
 
-  defp provider_options(opts) do
-    inherited =
+  defp provider_options(opts, provider) do
+    provider_opts =
       opts
       |> Keyword.drop(@generic_options)
-      |> inherit_provider_option(:api_key, :api_key)
-      |> inherit_provider_option(:base_url, :base_url)
-      |> inherit_provider_option(:model, :default_model)
-      |> inherit_timeout()
-      |> inherit_provider_option(:retry, :retry)
-      |> inherit_provider_option(:headers, :headers)
-      |> inherit_provider_option(:transport, :transport)
-      |> inherit_provider_option(:transport_opts, :transport_opts)
+      |> maybe_inherit_typesafe_options(provider)
 
     explicit = Keyword.get(opts, :provider_opts, [])
 
@@ -181,8 +174,22 @@ defmodule SystemOneSDK.Client do
       raise ArgumentError, ":provider_opts must be a keyword list"
     end
 
-    Keyword.merge(inherited, explicit)
+    Keyword.merge(provider_opts, explicit)
   end
+
+  defp maybe_inherit_typesafe_options(opts, TypeSafe) do
+    opts
+    |> inherit_provider_option(:api_key, :api_key)
+    |> inherit_provider_option(:base_url, :base_url)
+    |> inherit_provider_option(:model, :default_model)
+    |> inherit_timeout()
+    |> inherit_provider_option(:retry, :retry)
+    |> inherit_provider_option(:headers, :headers)
+    |> inherit_provider_option(:transport, :transport)
+    |> inherit_provider_option(:transport_opts, :transport_opts)
+  end
+
+  defp maybe_inherit_typesafe_options(opts, _provider), do: opts
 
   defp inherit_provider_option(opts, provider_key, config_key) do
     case Keyword.fetch(opts, provider_key) do

@@ -99,9 +99,7 @@ defmodule SystemOneSDK.Providers.Contract do
          Enum.all?(required, fn {name, arity} -> function_exported?(provider, name, arity) end) do
       :ok
     else
-      raise Error.configuration(
-              "invalid System One inference provider #{inspect(provider)}"
-            )
+      raise Error.configuration("invalid System One inference provider #{inspect(provider)}")
     end
   end
 

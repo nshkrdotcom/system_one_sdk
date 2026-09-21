@@ -36,6 +36,4 @@ defmodule SystemOneSDK.Providers.Endpoint.TransportResponse do
       normalized["x-system-one-request-id"] ||
       normalized["x-typesafe-request-id"]
   end
-
-  defp request_id(_), do: nil
 end
