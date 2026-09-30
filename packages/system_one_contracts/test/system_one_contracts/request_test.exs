@@ -1,7 +1,7 @@
 defmodule SystemOneContracts.RequestTest do
   use ExUnit.Case, async: true
 
-  alias SystemOneContracts.V1.Request
+  alias SystemOneContracts.V1.{Request, Validation}
 
   test "pair-list questions preserve their wire order" do
     request =
@@ -43,7 +43,7 @@ defmodule SystemOneContracts.RequestTest do
 
     assert {:ok, request} = Request.decode_json(json)
     route = request.questions |> Enum.into(%{}) |> Map.fetch!("route")
-    criteria = SystemOneContracts.V1.Validation.value(route, "criteria")
+    criteria = Validation.value(route, "criteria")
 
     assert %Jason.OrderedObject{values: [{"z", "Z first"}, {"a", "A second"}]} = criteria
     assert Request.encode!(request) =~ ~s("criteria":{"z":"Z first","a":"A second"})

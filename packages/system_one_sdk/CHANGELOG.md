@@ -1,6 +1,12 @@
 # Changelog
 
-## 0.6.0 — Unreleased
+All notable changes to SystemOneSDK are documented here.
+
+The project follows Semantic Versioning.
+
+## [0.6.0] - 2026-09-29
+
+### Added
 
 - Move the SDK intact into an independent Poncho package.
 - Use published TypeSafe dependencies without workspace bootstrapping.
@@ -10,11 +16,6 @@
 - Add reusable `SystemOneSDK.Conformance` coverage for model discovery, Noul, ordered Choice, Score and semantic enrichment.
 - Add an optional prepared-provider callback so native adapters can preserve exact prepared question ordering without breaking existing providers.
 - Make model metadata provider-neutral with optional description/release date plus capabilities and metadata.
-
-
-All notable changes to SystemOneSDK are documented here.
-
-The project follows Semantic Versioning.
 
 ## [0.5.0] - 2026-09-19
 

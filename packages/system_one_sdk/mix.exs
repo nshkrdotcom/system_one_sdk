@@ -31,7 +31,7 @@ defmodule SystemOneSDK.MixProject do
 
   defp deps do
     [
-      {:system_one_contracts, path: "../system_one_contracts"},
+      {:system_one_contracts, "~> 0.1.0"},
       {:pristine, "~> 0.4.0"},
       {:typesafe_api_sdk, "~> 0.1.0"},
       {:jason, "~> 1.4.5"},
@@ -63,8 +63,9 @@ defmodule SystemOneSDK.MixProject do
   defp docs do
     [
       main: "readme",
-      source_ref: "main",
-      source_url_pattern: @source_url <> "/blob/main/packages/system_one_sdk/%{path}#L%{line}",
+      source_ref: "v#{@version}",
+      source_url_pattern:
+        @source_url <> "/blob/v#{@version}/packages/system_one_sdk/%{path}#L%{line}",
       source_url: @source_url,
       canonical: "https://hexdocs.pm/system_one_sdk",
       logo: "assets/system_one_sdk.svg",

@@ -5,7 +5,7 @@ defmodule SystemOneSDK.ReleaseConsistencyTest do
     assert SystemOneSDK.version() == "0.6.0"
     assert Mix.Project.config()[:version] == "0.6.0"
     assert Mix.Project.config()[:app] == :system_one_sdk
-    assert Mix.Project.config()[:docs][:source_ref] == "main"
+    assert Mix.Project.config()[:docs][:source_ref] == "v0.6.0"
 
     assert Mix.Project.config()[:source_url] ==
              "https://github.com/nshkrdotcom/system_one_sdk"

@@ -1,4 +1,4 @@
-# Getting Started with 0.6.0 (unreleased)
+# Getting Started with 0.6.0
 
 ## Install and select a provider
 

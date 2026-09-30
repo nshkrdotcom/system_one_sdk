@@ -48,7 +48,7 @@ defmodule SystemOneContracts.V1.ModelsResponse do
   end
 
   defp prefix(%Error{} = error, index) do
-    path = ["models", Integer.to_string(index)] ++ strip_models(error.path || [])
+    path = ["models", Integer.to_string(index)] ++ strip_models(error.path)
     %{error | path: path, message: "Invalid System One response at #{inspect(path)}"}
   end
 

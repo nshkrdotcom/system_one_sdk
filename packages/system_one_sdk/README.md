@@ -583,7 +583,7 @@ Descriptions and instructions can also contain JSON-compatible objects or arrays
 
 # Installation
 
-0.6.0 is under development; 0.5.0 is the published release.
+Install the 0.6.0 release from Hex.
 
 Requires Elixir `~> 1.18`.
 
@@ -1357,6 +1357,6 @@ See [`LICENSE`](LICENSE) for the full license text.
 
 This package owns reusable semantic questions, preparation, evaluation, responses, batching, telemetry and OTP helpers. TypeSafe-specific HTTP, authentication, wire schemas, retries and OpenAPI maintenance belong to the separate published `typesafe_api_sdk ~> 0.1.0`.
 
-Native execution ([SystemOneBumblebee](../system_one_bumblebee/README.md)) and the HTTP façade ([SystemOneServer](../system_one_server/README.md)) are optional, upcoming runtimes. Neither is required for hosted programmatic use. Provider-neutral v1 contracts and conformance remain upcoming 0.6.0 work within this SDK.
+Native execution ([SystemOneBumblebee](../system_one_bumblebee/README.md)) and the HTTP façade ([SystemOneServer](../system_one_server/README.md)) are optional, upcoming runtimes. Neither is required for hosted programmatic use. Provider-neutral v1 wire contracts live in `system_one_contracts`; this SDK provides the rich client adapter and semantic conformance checks.
 
 [Repository](../../README.md) · [MIT License](LICENSE) — Copyright (c) 2026 nshkrdotcom

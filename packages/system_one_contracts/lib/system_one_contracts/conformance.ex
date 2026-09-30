@@ -32,9 +32,8 @@ defmodule SystemOneContracts.Conformance do
     expected = Request.question_keys(request)
     actual = Map.keys(response.answers)
 
-    with :ok <- exact_keys(expected, actual),
-         :ok <- answer_types(request, response) do
-      :ok
+    with :ok <- exact_keys(expected, actual) do
+      answer_types(request, response)
     end
   end
 

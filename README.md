@@ -20,8 +20,8 @@ Most application users need only:
 ```
 
 Runtime/server implementers may depend directly on the smaller
-`system_one_contracts` package. The SDK 0.6.0 and contracts 0.1.0 lines are under
-development; SystemOneSDK 0.5.0 and TypeSafeAPISDK 0.1.0 are published.
+`system_one_contracts` package. The release versions are SystemOneSDK 0.6.0 and
+SystemOneContracts 0.1.0. TypeSafeAPISDK remains a published Hex dependency.
 
 SystemOneSDK itself is programmatic. The server is optional. Native inference is
 optional. Hosted use does not require Bumblebee, Nx, EXLA, Plug or Bandit. The
@@ -38,10 +38,9 @@ mix docs --warnings-as-errors
 
 Fast QC fetches dependencies and runs formatting, test compilation and offline
 tests per package. It does not run live calls, Dialyzer or model downloads.
-During development the SDK, Bumblebee and Server use explicit sibling path
-dependencies on `system_one_contracts`; release gates reject those path
-dependencies until the contracts package is published and the dependency is
-switched to `{:system_one_contracts, "~> 0.1.0"}`.
+The SDK uses `system_one_contracts ~> 0.1.0` from Hex. Bumblebee and Server
+currently use sibling contracts paths for development; their release gates
+require switching those dependencies to Hex.
 
 See [architecture](docs/ARCHITECTURE.md), [packages](docs/PACKAGES.md),
 [roadmap](docs/ROADMAP.md), [release order](docs/RELEASE_ORDER.md),

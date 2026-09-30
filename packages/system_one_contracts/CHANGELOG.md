@@ -1,8 +1,10 @@
 # Changelog
 
-## 0.1.0 — Unreleased
+## [0.1.0] - 2026-09-29
 
-- Establish the provider-neutral `system-one/v1` protocol package.
-- Add ordered request DTOs, typed response/model DTOs and JSON codecs, including raw ordered JSON request decoding.
-- Add stable capability and error vocabularies.
-- Add the inference-side provider behaviour and reusable conformance runner.
+### Added
+
+- Initial release of the provider-neutral `system-one/v1` protocol package.
+- Ordered request DTOs, typed response/model DTOs and JSON codecs, including raw ordered JSON request decoding.
+- Stable capability and error vocabularies.
+- Inference-side provider behaviour and reusable conformance runner.

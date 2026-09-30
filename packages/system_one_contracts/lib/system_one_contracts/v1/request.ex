@@ -128,12 +128,7 @@ defmodule SystemOneContracts.V1.Request do
 
   defp normalize_question_pairs(pairs) do
     with {:ok, pairs} <- normalize_object_pairs(pairs, ["questions"]) do
-      Enum.reduce_while(pairs, {:ok, []}, fn {wire_key, question}, {:ok, acc} ->
-        case normalize_question(question, wire_key) do
-          {:ok, normalized} -> {:cont, {:ok, [{wire_key, normalized} | acc]}}
-          {:error, _} = error -> {:halt, error}
-        end
-      end)
+      Enum.reduce_while(pairs, {:ok, []}, &normalize_question_entry/2)
       |> case do
         {:ok, reversed} -> {:ok, Enum.reverse(reversed)}
         error -> error
@@ -142,6 +137,13 @@ defmodule SystemOneContracts.V1.Request do
   rescue
     Protocol.UndefinedError ->
       {:error, Error.invalid_request(["questions"], "must be a proper key/value list")}
+  end
+
+  defp normalize_question_entry({wire_key, question}, {:ok, acc}) do
+    case normalize_question(question, wire_key) do
+      {:ok, normalized} -> {:cont, {:ok, [{wire_key, normalized} | acc]}}
+      {:error, _} = error -> {:halt, error}
+    end
   end
 
   defp normalize_question(question, key) when is_map(question) do

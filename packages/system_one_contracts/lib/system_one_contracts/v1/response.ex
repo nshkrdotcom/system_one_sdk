@@ -48,17 +48,12 @@ defmodule SystemOneContracts.V1.Response do
       {key, answer}, {:ok, acc} when is_binary(key) or is_atom(key) ->
         wire_key = to_string(key)
 
-        cond do
-          String.trim(wire_key) == "" or not String.valid?(wire_key) or
-              Map.has_key?(acc, wire_key) ->
-            {:halt,
-             {:error, Error.invalid_response(["answers"], "contains an invalid or duplicate key")}}
-
-          true ->
-            case validate_answer(answer, wire_key) do
-              :ok -> {:cont, {:ok, Map.put(acc, wire_key, answer)}}
-              {:error, _} = error -> {:halt, error}
-            end
+        if String.trim(wire_key) == "" or not String.valid?(wire_key) or
+             Map.has_key?(acc, wire_key) do
+          {:halt,
+           {:error, Error.invalid_response(["answers"], "contains an invalid or duplicate key")}}
+        else
+          append_answer(answer, wire_key, acc)
         end
 
       _entry, _acc ->
@@ -67,6 +62,13 @@ defmodule SystemOneContracts.V1.Response do
   end
 
   defp decode_answers(_), do: {:error, Error.invalid_response(["answers"], "must be an object")}
+
+  defp append_answer(answer, wire_key, acc) do
+    case validate_answer(answer, wire_key) do
+      :ok -> {:cont, {:ok, Map.put(acc, wire_key, answer)}}
+      {:error, _} = error -> {:halt, error}
+    end
+  end
 
   defp validate_answer(answer, key) when is_map(answer) do
     case Validation.value(answer, "type") do
