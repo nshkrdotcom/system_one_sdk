@@ -31,8 +31,8 @@
 - [x] Prepare manifests, dated changelogs, README status and AGENTS.md. Add contracts docs navigation and static analysis tools; pin source links to release tags.
 - [x] Run contracts dependencies, format, warnings-as-errors compile/tests, Credo, Dialyzer and docs. Rehearse SDK QC with local contracts before publication, inspect both built archives, and commit/push release sources with SDK Hex requirement.
 - [x] Publish contracts, resolve SDK from Hex, rerun SDK QC and release build; commit/push its resolved lockfile before SDK publication.
-- [ ] Publish SDK, verify Hex release versions, tag corresponding commits and push tags.
-- [ ] Query latest stable external Fount dependencies, update manifests/locks, run format/compile/tests and workspace QC, fix findings, commit and push Fount.
+- [x] Publish SDK, verify Hex release versions, tag corresponding commits and push tags.
+- [x] Query latest stable external Fount dependencies, update manifests/locks, run format/compile/tests and workspace QC, fix findings, commit and push Fount.
 
 ## Execution record
 
@@ -47,3 +47,9 @@
 
 - Contracts published from 249a03f with archive checksum 9f7ce08e9c15b9e19d43fee0d029b7a1632369ff3b73ae46016fb343f8d9f8d5; docs published.
 - Final SDK QC using fetched Hex contracts 0.1.0 passed all gates (1 doctest + 140 tests, 0 failures; strict Credo; Dialyzer 0 errors; ExDoc). Release build checksum 92aa8f39686610d391782073c7bf789346a1ad869560fe2beb1aa8e9319cf920.
+
+- SDK published from 7442900; package and docs uploaded, public Hex release checksum verified.
+- Pushed lightweight tags v0.1.0 at 249a03f and v0.6.0 at 7442900 after both publications.
+- Fount now resolves SDK 0.6.0/contracts 0.1.0 from Hex; all external requirements updated to latest stable releases, including Inference 0.5.1 and AgentSessionManager 0.17.3. Launcher defaults to Hex and retains explicit checkout overrides.
+- Fount QC passed: 403 ExUnit checks (including one property), 184 Python checks, warnings-as-errors compilation/tests, format, strict Credo, Dialyzer (six projects, zero errors), docs, locks and architecture. Initialized/migrated the host test database on its configured PostgreSQL server; no live provider tests run.
+- Fount publication is explicitly excluded by the user.
