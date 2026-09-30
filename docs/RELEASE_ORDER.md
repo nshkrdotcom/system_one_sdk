@@ -11,3 +11,9 @@ path with the Hex requirement, fetch dependencies, and refresh its lockfile.
 Run `scripts/release_check PACKAGE` from the root: it rejects path/Git
 dependencies and performs a Hex build. No publication is performed by repository
 scripts. Run full quality gates and review artifact contents before publication.
+
+Release tags use `<mix_app>-v<version>` for every package in this workspace,
+for example `system_one_contracts-v0.1.0` and `system_one_sdk-v0.6.0`.
+Tags identify the exact published source commit. SDK 0.5.0 uses
+`system_one_sdk-v0.5.0`, including its pre-poncho repository layout.
+Documentation source references and source URL patterns must use the same tag.

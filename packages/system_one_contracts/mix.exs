@@ -25,9 +25,10 @@ defmodule SystemOneContracts.MixProject do
       ],
       docs: [
         main: "readme",
-        source_ref: "v#{@version}",
+        source_ref: "system_one_contracts-v#{@version}",
         source_url_pattern:
-          @source_url <> "/blob/v#{@version}/packages/system_one_contracts/%{path}#L%{line}",
+          @source_url <>
+            "/blob/system_one_contracts-v#{@version}/packages/system_one_contracts/%{path}#L%{line}",
         canonical: "https://hexdocs.pm/system_one_contracts",
         extras: [
           "README.md",

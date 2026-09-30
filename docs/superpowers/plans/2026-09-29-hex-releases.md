@@ -53,3 +53,16 @@
 - Fount now resolves SDK 0.6.0/contracts 0.1.0 from Hex; all external requirements updated to latest stable releases, including Inference 0.5.1 and AgentSessionManager 0.17.3. Launcher defaults to Hex and retains explicit checkout overrides.
 - Fount QC passed: 403 ExUnit checks (including one property), 184 Python checks, warnings-as-errors compilation/tests, format, strict Credo, Dialyzer (six projects, zero errors), docs, locks and architecture. Initialized/migrated the host test database on its configured PostgreSQL server; no live provider tests run.
 - Fount publication is explicitly excluded by the user.
+
+## Package-qualified tag migration (2026-09-30)
+
+The original plain tags recorded above are superseded by the poncho convention
+`<mix_app>-v<version>`, matching execution_plane and ground_plane.
+
+- `system_one_contracts-v0.1.0` identifies the original contracts release at `249a03f`.
+- `system_one_sdk-v0.5.0` identifies the original pre-poncho SDK release at `382c959`.
+- `system_one_sdk-v0.6.0` identifies the original SDK release at `7442900`.
+
+Documentation source references use these qualified tags. Published HexDocs are
+refreshed for these releases before the old tags are removed; package archives
+and release source commits are unchanged.

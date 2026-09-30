@@ -63,9 +63,9 @@ defmodule SystemOneSDK.MixProject do
   defp docs do
     [
       main: "readme",
-      source_ref: "v#{@version}",
+      source_ref: "system_one_sdk-v#{@version}",
       source_url_pattern:
-        @source_url <> "/blob/v#{@version}/packages/system_one_sdk/%{path}#L%{line}",
+        @source_url <> "/blob/system_one_sdk-v#{@version}/packages/system_one_sdk/%{path}#L%{line}",
       source_url: @source_url,
       canonical: "https://hexdocs.pm/system_one_sdk",
       logo: "assets/system_one_sdk.svg",
