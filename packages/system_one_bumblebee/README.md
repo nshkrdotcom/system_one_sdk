@@ -1,4 +1,14 @@
-<img src="assets/system_one_bumblebee.svg" width="200" height="200" alt="SystemOneBumblebee">
+<p align="center">
+  <img src="assets/system_one_bumblebee.svg" width="200" height="200" alt="SystemOneBumblebee"/>
+</p>
+
+<p align="center">
+  <a href="https://github.com/nshkrdotcom/system_one_sdk/actions/workflows/ci.yml"><img src="https://github.com/nshkrdotcom/system_one_sdk/actions/workflows/ci.yml/badge.svg" alt="CI"/></a>
+  <img src="https://img.shields.io/badge/status-0.1.0--dev-orange" alt="0.1.0-dev"/>
+  <img src="https://img.shields.io/badge/stack-Nx%20%C2%B7%20Axon%20%C2%B7%20Bumblebee-0F766E" alt="Nx Axon Bumblebee"/>
+  <img src="https://img.shields.io/badge/elixir-~%3E%201.18-4B275F?logo=elixir&logoColor=white" alt="Elixir ~> 1.18"/>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green.svg" alt="MIT License"/></a>
+</p>
 
 # SystemOneBumblebee
 
