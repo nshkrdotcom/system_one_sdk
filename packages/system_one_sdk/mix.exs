@@ -167,6 +167,8 @@ defmodule SystemOneSDK.MixProject do
           SystemOneSDK.Client,
           SystemOneSDK.Providers.Contract,
           SystemOneSDK.Providers.Endpoint,
+          SystemOneSDK.Providers.GeminiDecisions,
+          SystemOneSDK.Providers.GeminiDecisions.Protocol,
           SystemOneSDK.SystemOne,
           SystemOneSDK.Models
         ],
