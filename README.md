@@ -1,4 +1,16 @@
-<img src="assets/system_one_ecosystem.svg" width="200" height="200" alt="System One ecosystem">
+<p align="center">
+  <img src="assets/system_one_ecosystem.svg" width="200" height="200" alt="System One ecosystem"/>
+</p>
+
+<p align="center">
+  <a href="https://github.com/nshkrdotcom/system_one_sdk/actions/workflows/ci.yml"><img src="https://github.com/nshkrdotcom/system_one_sdk/actions/workflows/ci.yml/badge.svg" alt="CI"/></a>
+  <a href="https://hex.pm/packages/system_one_sdk"><img src="https://img.shields.io/hexpm/v/system_one_sdk.svg?color=6E4A7E&label=system_one_sdk" alt="Hex.pm"/></a>
+  <a href="https://hexdocs.pm/system_one_sdk"><img src="https://img.shields.io/badge/hex-docs-blue.svg" alt="HexDocs"/></a>
+  <img src="https://img.shields.io/badge/elixir-~%3E%201.18-4B275F?logo=elixir&logoColor=white" alt="Elixir ~> 1.18"/>
+  <img src="https://img.shields.io/badge/OTP-28%2B-A90533?logo=erlang&logoColor=white" alt="OTP 28+"/>
+  <img src="https://img.shields.io/badge/protocol-system--one%2Fv1-0F766E" alt="system-one/v1"/>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green.svg" alt="MIT License"/></a>
+</p>
 
 # System One SDK Poncho
 

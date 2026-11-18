@@ -1,3 +1,11 @@
+<p align="left">
+  <a href="https://github.com/nshkrdotcom/system_one_sdk/actions/workflows/ci.yml"><img src="https://github.com/nshkrdotcom/system_one_sdk/actions/workflows/ci.yml/badge.svg" alt="CI"/></a>
+  <img src="https://img.shields.io/badge/protocol-system--one%2Fv1-0F766E" alt="system-one/v1"/>
+  <img src="https://img.shields.io/badge/elixir-~%3E%201.18-4B275F?logo=elixir&logoColor=white" alt="Elixir ~> 1.18"/>
+  <img src="https://img.shields.io/badge/version-0.1.0%20(unreleased)-orange" alt="0.1.0 unreleased"/>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green.svg" alt="MIT License"/></a>
+</p>
+
 # SystemOneContracts
 
 Provider-neutral System One v1 wire contracts and the inference-side provider

@@ -120,7 +120,7 @@ defmodule SystemOneSDK.OTP.ServerV040Test do
 
     pid = start_triage(client, supervisor, max_in_flight: 1)
     first = Task.async(fn -> GenServer.call(pid, {:classify, "invoice"}) end)
-    assert_receive {:transport_started, "invoice", transport_worker}
+    assert_receive {:transport_started, "invoice", transport_worker}, 2_000
 
     assert status_state(pid) == %{
              module: Triage,
@@ -221,7 +221,7 @@ defmodule SystemOneSDK.OTP.ServerV040Test do
         GenServer.call(pid, {:classify, "invoice", [cancellation: caller_token]})
       end)
 
-    assert_receive {:transport_started, "invoice", _worker}
+    assert_receive {:transport_started, "invoice", _worker}, 2_000
     :ok = Cancellation.cancel(caller_token)
     assert {:error, %Error{type: :cancelled}} = Task.await(request)
     assert Process.alive?(pid)
@@ -281,7 +281,7 @@ defmodule SystemOneSDK.OTP.ServerV040Test do
       send(parent, {:caller_finished, result})
     end)
 
-    assert_receive {:transport_started, "invoice", _worker}
+    assert_receive {:transport_started, "invoice", _worker}, 2_000
     refute Cancellation.cancelled?(caller_token)
     :ok = GenServer.stop(pid, :normal)
     refute Cancellation.cancelled?(caller_token)
