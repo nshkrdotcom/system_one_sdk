@@ -16,6 +16,7 @@ defmodule SystemOneSDK.Telemetry do
   alias SystemOneSDK.{
     ChoiceAnswer,
     Error,
+    ExtractionAnswer,
     NoulAnswer,
     Prepared,
     ScoreAnswer,
@@ -116,6 +117,10 @@ defmodule SystemOneSDK.Telemetry do
        top_probability: first(ranked),
        distribution_margin: margin(ranked)
      }}
+  end
+
+  defp answer_measurements(%ExtractionAnswer{type: type, confidence: confidence}) do
+    {type, maybe_put(%{}, :confidence, confidence)}
   end
 
   defp first([value | _]), do: value

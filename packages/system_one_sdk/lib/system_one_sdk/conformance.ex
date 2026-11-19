@@ -2,14 +2,38 @@ defmodule SystemOneSDK.Conformance do
   @moduledoc "Reusable client/provider conformance gate for the rich SystemOneSDK surface."
 
   alias SystemOneContracts.Capabilities
-  alias SystemOneSDK.{ChoiceAnswer, Client, ListModelsResponse, NoulAnswer, ScoreAnswer}
 
+  alias SystemOneSDK.{
+    ChoiceAnswer,
+    Client,
+    Error,
+    ExtractionAnswer,
+    ListModelsResponse,
+    NoulAnswer,
+    ScoreAnswer
+  }
+
+  @extraction_capabilities ["question:text", "question:number"]
+
+  @doc "Run the decision checks by default, or pass `profile: :extraction` for text and number checks."
   @spec run(Client.t(), keyword()) :: {:ok, map()} | {:error, term()}
   def run(%Client{} = client, opts \\ []) when is_list(opts) do
     model = Keyword.get(opts, :model) || client.default_model
-    common_opts = Keyword.drop(opts, [:model])
-    request_opts = Keyword.put(common_opts, :model, model)
+    common_opts = Keyword.drop(opts, [:model, :profile])
 
+    case Keyword.get(opts, :profile, :decision) do
+      :decision ->
+        run_decision(client, model, common_opts)
+
+      :extraction ->
+        run_extraction(client, model, common_opts)
+
+      _ ->
+        {:error, Error.invalid_request(["options", "profile"], "must be :decision or :extraction")}
+    end
+  end
+
+  defp run_decision(client, model, opts) do
     questions = [
       noul: SystemOneSDK.noul("Is this fixture affirmative?"),
       route:
@@ -22,10 +46,14 @@ defmodule SystemOneSDK.Conformance do
     ]
 
     with {:ok, capabilities} <- semantic_capabilities(client),
-         {:ok, %ListModelsResponse{} = catalog} <- SystemOneSDK.list_models(client, common_opts),
-         :ok <- model_present(catalog, model),
+         {:ok, _metadata} <- find_model(client, model, opts),
          {:ok, response} <-
-           SystemOneSDK.evaluate(client, "System One conformance fixture", questions, request_opts),
+           SystemOneSDK.evaluate(
+             client,
+             "System One conformance fixture",
+             questions,
+             Keyword.put(opts, :model, model)
+           ),
          :ok <- answer_shapes(response) do
       {:ok,
        %{
@@ -44,6 +72,59 @@ defmodule SystemOneSDK.Conformance do
        }}
     end
   end
+
+  defp run_extraction(client, model, opts) do
+    fields = [
+      invoice_id: %{type: "text", instructions: "The invoice ID"},
+      total: %{type: "number", instructions: "The invoice total"}
+    ]
+
+    with {:ok, metadata} <- find_model(client, model, opts),
+         :ok <- extraction_capabilities(metadata.capabilities),
+         {:ok, response} <-
+           SystemOneSDK.evaluate(
+             client,
+             "Invoice INV-7. Total: 12.50.",
+             fields,
+             Keyword.put(opts, :model, model)
+           ),
+         :ok <- extraction_shapes(response) do
+      protocol = SystemOneContracts.protocol()
+
+      capabilities =
+        client
+        |> Client.capabilities()
+        |> Map.put(:system_one, %{protocol: protocol, capabilities: metadata.capabilities})
+
+      {:ok,
+       %{
+         provider: client.provider.id(),
+         model: model,
+         protocol: protocol,
+         capabilities: capabilities,
+         checks: [:capabilities, :model_discovery, :text, :number, :semantic_enrichment]
+       }}
+    end
+  end
+
+  defp extraction_capabilities(capabilities) do
+    case @extraction_capabilities -- capabilities do
+      [] -> :ok
+      missing -> {:error, Error.response_contract(:provider_capabilities, %{missing: missing})}
+    end
+  end
+
+  defp extraction_shapes(%{
+         answers: %{
+           invoice_id: %ExtractionAnswer{type: :text, value: invoice_id},
+           total: %ExtractionAnswer{type: :number, value: total}
+         }
+       })
+       when is_binary(invoice_id) and is_number(total),
+       do: :ok
+
+  defp extraction_shapes(_response),
+    do: {:error, Error.response_contract(:conformance_shape, %{expected: [:text, :number]})}
 
   defp semantic_capabilities(client) do
     report = Client.capabilities(client)
@@ -66,7 +147,7 @@ defmodule SystemOneSDK.Conformance do
     else
       _ ->
         {:error,
-         SystemOneSDK.Error.response_contract(:provider_capabilities, %{
+         Error.response_contract(:provider_capabilities, %{
            expected_protocol: SystemOneContracts.protocol(),
            required: Capabilities.core(),
            actual: semantic
@@ -74,10 +155,13 @@ defmodule SystemOneSDK.Conformance do
     end
   end
 
-  defp model_present(%ListModelsResponse{models: models}, model) do
-    if Enum.any?(models, &(&1.name == model)),
-      do: :ok,
-      else: {:error, SystemOneSDK.Error.model_lookup(:model_not_found, model)}
+  defp find_model(client, model, opts) do
+    with {:ok, %ListModelsResponse{models: models}} <- SystemOneSDK.list_models(client, opts) do
+      case Enum.find(models, &(&1.name == model)) do
+        nil -> {:error, Error.model_lookup(:model_not_found, model)}
+        metadata -> {:ok, metadata}
+      end
+    end
   end
 
   defp answer_shapes(response) do
@@ -92,7 +176,7 @@ defmodule SystemOneSDK.Conformance do
 
       _ ->
         {:error,
-         SystemOneSDK.Error.response_contract(:conformance_shape, %{
+         Error.response_contract(:conformance_shape, %{
            expected: [:noul, :ordered_choice, :score]
          })}
     end

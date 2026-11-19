@@ -9,7 +9,15 @@ defmodule SystemOneSDK.SystemOneResponse do
 
   require Logger
 
-  alias SystemOneSDK.{ChoiceAnswer, Error, NoulAnswer, ScoreAnswer, TransportResponse, Usage}
+  alias SystemOneSDK.{
+    ChoiceAnswer,
+    Error,
+    ExtractionAnswer,
+    NoulAnswer,
+    ScoreAnswer,
+    TransportResponse,
+    Usage
+  }
 
   @enforce_keys [:model, :usage, :answers]
   defstruct [
@@ -27,7 +35,7 @@ defmodule SystemOneSDK.SystemOneResponse do
     elapsed_ms: 0
   ]
 
-  @type answer :: NoulAnswer.t() | ChoiceAnswer.t() | ScoreAnswer.t()
+  @type answer :: NoulAnswer.t() | ChoiceAnswer.t() | ScoreAnswer.t() | ExtractionAnswer.t()
   @type t :: %__MODULE__{
           model: String.t(),
           usage: Usage.t(),
@@ -167,6 +175,12 @@ defmodule SystemOneSDK.SystemOneResponse do
       "score" ->
         decode_score(name, raw)
 
+      "text" ->
+        decode_extraction(name, raw, :text)
+
+      "number" ->
+        decode_extraction(name, raw, :number)
+
       type when is_binary(type) ->
         Logger.warning(
           "Ignoring a provider answer with an unrecognized future type; inspect response.raw explicitly"
@@ -216,6 +230,48 @@ defmodule SystemOneSDK.SystemOneResponse do
     end
   end
 
+  defp decode_extraction(name, raw, type) do
+    path = ["answers", name]
+
+    with {:ok, value} <- extraction_value(raw, type, path ++ ["value"]),
+         {:ok, span} <- extraction_span(raw, path ++ ["span"]),
+         {:ok, confidence} <- optional_probability(raw, "confidence", path ++ ["confidence"]),
+         {:ok, null_probability} <- optional_probability(raw, "p_null", path ++ ["p_null"]) do
+      {:ok,
+       %ExtractionAnswer{
+         type: type,
+         value: value,
+         span: span,
+         confidence: confidence,
+         null_probability: null_probability
+       }}
+    end
+  end
+
+  defp extraction_value(raw, type, path) do
+    value = Map.get(raw, "value", Map.get(raw, :value, :missing))
+
+    case {type, value} do
+      {_, nil} -> {:ok, nil}
+      {:text, value} when is_binary(value) -> {:ok, value}
+      {:number, value} when is_number(value) -> {:ok, value}
+      _ -> {:error, Error.response_validation(path, raw)}
+    end
+  end
+
+  defp extraction_span(raw, path) do
+    case Map.get(raw, "span", Map.get(raw, :span)) do
+      nil ->
+        {:ok, nil}
+
+      [first, last] when is_integer(first) and is_integer(last) and first >= 0 and last >= first ->
+        {:ok, {first, last}}
+
+      _ ->
+        {:error, Error.response_validation(path, raw)}
+    end
+  end
+
   defp required_string(map, key, path) do
     case value(map, key) do
       value when is_binary(value) -> {:ok, value}
@@ -240,6 +296,14 @@ defmodule SystemOneSDK.SystemOneResponse do
 
   defp required_probability(map, key, path) do
     case value(map, key) do
+      value when is_number(value) and value >= 0 and value <= 1 -> {:ok, value}
+      _ -> {:error, Error.response_validation(path, map)}
+    end
+  end
+
+  defp optional_probability(map, key, path) do
+    case Map.get(map, key, Map.get(map, known_atom_key(key))) do
+      nil -> {:ok, nil}
       value when is_number(value) and value >= 0 and value <= 1 -> {:ok, value}
       _ -> {:error, Error.response_validation(path, map)}
     end
@@ -315,6 +379,7 @@ defmodule SystemOneSDK.SystemOneResponse do
   defp known_atom_key("noul"), do: :noul
   defp known_atom_key("choice"), do: :choice
   defp known_atom_key("confidence"), do: :confidence
+  defp known_atom_key("p_null"), do: :p_null
   defp known_atom_key("probabilities"), do: :probabilities
   defp known_atom_key("score"), do: :score
   defp known_atom_key("legend"), do: :legend

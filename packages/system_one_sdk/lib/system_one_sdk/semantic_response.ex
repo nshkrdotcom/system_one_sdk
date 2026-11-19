@@ -1,9 +1,17 @@
 defmodule SystemOneSDK.SemanticResponse do
   @moduledoc false
-  alias SystemOneSDK.{ChoiceAnswer, Error, NoulAnswer, Prepared, ScoreAnswer, SystemOneResponse}
+  alias SystemOneSDK.{
+    ChoiceAnswer,
+    Error,
+    ExtractionAnswer,
+    NoulAnswer,
+    Prepared,
+    ScoreAnswer,
+    SystemOneResponse
+  }
 
   def enrich(%SystemOneResponse{} = response, %Prepared{} = prepared, tolerance) do
-    with :ok <- missing_answers(response, prepared),
+    with :ok <- check_requested_answers(response, prepared),
          {:ok, answers} <- join(response.answers, prepared, tolerance) do
       {:ok, %{response | answers: answers}}
     else
@@ -12,13 +20,24 @@ defmodule SystemOneSDK.SemanticResponse do
     end
   end
 
-  defp missing_answers(response, prepared) do
-    case Enum.find(Prepared.wire_keys(prepared), fn id ->
-           not Map.has_key?(response.answers, id) and not Map.has_key?(response.unknown_answers, id)
-         end) do
-      nil -> :ok
-      id -> invalid(["answers", id], "requested question has no answer entry")
-    end
+  defp check_requested_answers(response, prepared) do
+    definitions = Prepared.definitions(prepared)
+
+    Enum.find_value(Prepared.wire_keys(prepared), :ok, fn id ->
+      cond do
+        Map.has_key?(response.answers, id) ->
+          nil
+
+        not Map.has_key?(response.unknown_answers, id) ->
+          invalid(["answers", id], "requested question has no answer entry")
+
+        definitions[id].type in ["text", "number"] ->
+          mismatched_type(id)
+
+        true ->
+          nil
+      end
+    end)
   end
 
   defp join(answers, prepared, tolerance) do
@@ -44,11 +63,15 @@ defmodule SystemOneSDK.SemanticResponse do
   defp type_matches(%NoulAnswer{}, "noul", _), do: :ok
   defp type_matches(%ChoiceAnswer{}, "choice", _), do: :ok
   defp type_matches(%ScoreAnswer{}, "score", _), do: :ok
+  defp type_matches(%ExtractionAnswer{type: :text}, "text", _), do: :ok
+  defp type_matches(%ExtractionAnswer{type: :number}, "number", _), do: :ok
+  defp type_matches(_, _, id), do: mismatched_type(id)
 
-  defp type_matches(_, _, id),
+  defp mismatched_type(id),
     do: invalid(["answers", id, "type"], "does not match requested question type")
 
   defp validate(%NoulAnswer{} = answer, _, _, _), do: {:ok, answer}
+  defp validate(%ExtractionAnswer{} = answer, _, _, _), do: {:ok, answer}
 
   defp validate(%ChoiceAnswer{} = answer, definition, path, tolerance) do
     with :ok <- member(answer.choice, Map.keys(definition.option_keys), path ++ ["choice"]),

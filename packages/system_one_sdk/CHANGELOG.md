@@ -4,6 +4,13 @@ All notable changes to SystemOneSDK are documented here.
 
 The project follows Semantic Versioning.
 
+## [Unreleased]
+
+### Added
+
+- Decode text and number extraction answers into `ExtractionAnswer` structs, including explicit nulls and source offsets.
+- Add an extraction conformance profile that checks the selected model's text and number capabilities.
+
 ## [0.6.0] - 2026-09-29
 
 ### Added

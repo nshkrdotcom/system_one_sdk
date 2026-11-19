@@ -184,6 +184,7 @@ defmodule SystemOneSDK.MixProject do
           SystemOneSDK.NoulAnswer,
           SystemOneSDK.ChoiceAnswer,
           SystemOneSDK.ScoreAnswer,
+          SystemOneSDK.ExtractionAnswer,
           SystemOneSDK.Usage
         ],
         "Errors and Configuration": [
