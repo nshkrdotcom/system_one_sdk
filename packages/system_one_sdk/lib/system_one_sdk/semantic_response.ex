@@ -11,33 +11,48 @@ defmodule SystemOneSDK.SemanticResponse do
   }
 
   def enrich(%SystemOneResponse{} = response, %Prepared{} = prepared, tolerance) do
-    with :ok <- check_requested_answers(response, prepared),
-         {:ok, answers} <- join(response.answers, prepared, tolerance) do
-      {:ok, %{response | answers: answers}}
+    with {:ok, decoded} <- decode_requested_answers(response, prepared),
+         {:ok, answers} <- join(decoded.answers, prepared, tolerance) do
+      {:ok, %{decoded | answers: answers}}
     else
       {:error, error} ->
         {:error, Error.attach_response(error, response.raw_http_response, response.raw)}
     end
   end
 
-  defp check_requested_answers(response, prepared) do
+  defp decode_requested_answers(response, prepared) do
     definitions = Prepared.definitions(prepared)
 
-    Enum.find_value(Prepared.wire_keys(prepared), :ok, fn id ->
-      cond do
-        Map.has_key?(response.answers, id) ->
-          nil
+    Enum.reduce_while(Prepared.wire_keys(prepared), {:ok, response}, fn
+      id, {:ok, %{answers: answers} = acc} when is_map_key(answers, id) ->
+        {:cont, {:ok, acc}}
 
-        not Map.has_key?(response.unknown_answers, id) ->
-          invalid(["answers", id], "requested question has no answer entry")
-
-        definitions[id].type in ["text", "number"] ->
-          mismatched_type(id)
-
-        true ->
-          nil
-      end
+      id, {:ok, acc} ->
+        case decode_unknown_answer(acc, id, Map.fetch!(definitions, id).type) do
+          {:ok, decoded} -> {:cont, {:ok, decoded}}
+          {:error, _} = error -> {:halt, error}
+        end
     end)
+  end
+
+  defp decode_unknown_answer(response, id, type) do
+    case {type, Map.fetch(response.unknown_answers, id)} do
+      {"text", {:ok, raw}} -> promote_extraction(response, id, raw, :text)
+      {"number", {:ok, raw}} -> promote_extraction(response, id, raw, :number)
+      {_, {:ok, _raw}} -> {:ok, response}
+      {_, :error} -> invalid(["answers", id], "requested question has no answer entry")
+    end
+  end
+
+  defp promote_extraction(response, id, raw, type) do
+    with {:ok, answer} <- ExtractionAnswer.decode(raw, id, type) do
+      {:ok,
+       %{
+         response
+         | answers: Map.put(response.answers, id, answer),
+           unknown_answers: Map.delete(response.unknown_answers, id)
+       }}
+    end
   end
 
   defp join(answers, prepared, tolerance) do
@@ -65,9 +80,8 @@ defmodule SystemOneSDK.SemanticResponse do
   defp type_matches(%ScoreAnswer{}, "score", _), do: :ok
   defp type_matches(%ExtractionAnswer{type: :text}, "text", _), do: :ok
   defp type_matches(%ExtractionAnswer{type: :number}, "number", _), do: :ok
-  defp type_matches(_, _, id), do: mismatched_type(id)
 
-  defp mismatched_type(id),
+  defp type_matches(_, _, id),
     do: invalid(["answers", id, "type"], "does not match requested question type")
 
   defp validate(%NoulAnswer{} = answer, _, _, _), do: {:ok, answer}

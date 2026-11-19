@@ -56,21 +56,40 @@ defmodule SystemOneSDK.ExtractionTest do
              Jason.decode!(request.body)
   end
 
-  test "the wire decoder distinguishes explicit nulls from missing or malformed values" do
-    assert {:ok, %{answers: %{"field" => %ExtractionAnswer{value: nil}}}} =
-             SystemOneResponse.decode(response(%{field: %{type: "number", value: nil}}))
+  test "requested extraction rejects malformed values and provider-reported failures" do
+    client = Test.client(provider: Endpoint, model: "extractor-test")
 
-    for {answer, key} <- [
-          {%{"type" => "text"}, "value"},
-          {%{"type" => "text", "value" => false}, "value"},
-          {%{"type" => "number", "value" => "12.50"}, "value"},
-          {%{"type" => "text", "value" => "INV-7", "span" => [13, 8]}, "span"},
-          {%{"type" => "number", "value" => 0, "confidence" => false}, "confidence"},
-          {%{"type" => "number", "value" => 0, "p_null" => 1.1}, "p_null"}
+    for {type, attributes, key} <- [
+          {"text", %{}, "value"},
+          {"text", %{"value" => false}, "value"},
+          {"number", %{"value" => "12.50"}, "value"},
+          {"text", %{"value" => "INV-7", "span" => [13, 8]}, "span"},
+          {"number", %{"value" => 0, "confidence" => false}, "confidence"},
+          {"number", %{"value" => 0, "p_null" => 1.1}, "p_null"},
+          {"text", %{"value" => nil, "valid" => false}, "valid"},
+          {"text", %{"value" => nil, "complete" => false}, "complete"},
+          {"text", %{"value" => nil, "complete" => "false"}, "complete"}
         ] do
+      Test.stub_response(client, response(%{field: Map.put(attributes, "type", type)}))
+
       assert {:error, %Error{type: :response_validation, path: ["answers", "field", ^key]}} =
-               SystemOneResponse.decode(response(%{field: answer}))
+               SystemOneSDK.evaluate(client, @state, field: %{type: type})
     end
+  end
+
+  test "wire decoding and decision evaluation preserve unrequested extraction-shaped entries" do
+    client = Test.client(provider: Endpoint, model: "extractor-test")
+    extra = %{"type" => "text", "payload" => "extension with its own shape"}
+    body = response(%{"decision" => %{"type" => "noul", "noul" => 0.75}, "extra" => extra})
+    Test.stub_response(client, body)
+
+    assert {:ok, %{unknown_answers: %{"extra" => ^extra}}} = SystemOneResponse.decode(body)
+
+    assert {:ok, result} =
+             SystemOneSDK.evaluate(client, @state, decision: SystemOneSDK.noul("An invoice?"))
+
+    assert Response.values(result) == %{decision: 0.75}
+    assert result.unknown_answers == %{"extra" => extra}
   end
 
   @tag :capture_log

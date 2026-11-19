@@ -53,13 +53,36 @@ defmodule SystemOneSDK.ConformanceTest do
       ])
 
     assert {:ok, report} = Conformance.run(client, profile: :extraction)
-    assert report.capabilities.system_one.capabilities == capabilities
+    assert report.model_capabilities == capabilities
+    assert report.capabilities.system_one.protocol == SystemOneContracts.protocol()
     assert :text in report.checks
     assert :number in report.checks
 
     assert [_, request] = Test.requests(client)
     assert %{"questions" => fields} = Jason.decode!(request.body)
     assert Enum.sort(Map.keys(fields)) == ["invoice_id", "total"]
+    assert :ok = Test.verify!(client)
+  end
+
+  test "extraction conformance rejects well-typed but wrong fixture values" do
+    client =
+      Test.client(provider: Endpoint, model: "extractor-test")
+      |> Test.stub_sequence([
+        {:models, [%{name: "extractor-test", capabilities: ["question:text", "question:number"]}]},
+        {:response,
+         %{
+           "model" => "extractor-test",
+           "usage" => %{},
+           "answers" => %{
+             "invoice_id" => %{"type" => "text", "value" => "INV-7"},
+             "total" => %{"type" => "number", "value" => 19.99}
+           }
+         }}
+      ])
+
+    assert {:error, %Error{details: %{violation: :conformance_values}}} =
+             Conformance.run(client, profile: :extraction)
+
     assert :ok = Test.verify!(client)
   end
 

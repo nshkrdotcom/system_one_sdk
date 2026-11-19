@@ -9,6 +9,7 @@ defmodule SystemOneSDK.Conformance do
     Error,
     ExtractionAnswer,
     ListModelsResponse,
+    Models,
     NoulAnswer,
     ScoreAnswer
   }
@@ -46,7 +47,8 @@ defmodule SystemOneSDK.Conformance do
     ]
 
     with {:ok, capabilities} <- semantic_capabilities(client),
-         {:ok, _metadata} <- find_model(client, model, opts),
+         {:ok, %ListModelsResponse{} = catalog} <- SystemOneSDK.list_models(client, opts),
+         :ok <- model_present(catalog, model),
          {:ok, response} <-
            SystemOneSDK.evaluate(
              client,
@@ -79,7 +81,9 @@ defmodule SystemOneSDK.Conformance do
       total: %{type: "number", instructions: "The invoice total"}
     ]
 
-    with {:ok, metadata} <- find_model(client, model, opts),
+    with {:ok, capabilities} <- semantic_capabilities(client, []),
+         {:ok, %ListModelsResponse{} = catalog} <- SystemOneSDK.list_models(client, opts),
+         {:ok, metadata} <- Models.find(catalog, model),
          :ok <- extraction_capabilities(metadata.capabilities),
          {:ok, response} <-
            SystemOneSDK.evaluate(
@@ -88,20 +92,14 @@ defmodule SystemOneSDK.Conformance do
              fields,
              Keyword.put(opts, :model, model)
            ),
-         :ok <- extraction_shapes(response) do
-      protocol = SystemOneContracts.protocol()
-
-      capabilities =
-        client
-        |> Client.capabilities()
-        |> Map.put(:system_one, %{protocol: protocol, capabilities: metadata.capabilities})
-
+         :ok <- extraction_values(response) do
       {:ok,
        %{
          provider: client.provider.id(),
          model: model,
-         protocol: protocol,
+         protocol: SystemOneContracts.protocol(),
          capabilities: capabilities,
+         model_capabilities: metadata.capabilities,
          checks: [:capabilities, :model_discovery, :text, :number, :semantic_enrichment]
        }}
     end
@@ -114,19 +112,18 @@ defmodule SystemOneSDK.Conformance do
     end
   end
 
-  defp extraction_shapes(%{
+  defp extraction_values(%{
          answers: %{
-           invoice_id: %ExtractionAnswer{type: :text, value: invoice_id},
-           total: %ExtractionAnswer{type: :number, value: total}
+           invoice_id: %ExtractionAnswer{type: :text, value: "INV-7"},
+           total: %ExtractionAnswer{type: :number, value: 12.5}
          }
-       })
-       when is_binary(invoice_id) and is_number(total),
+       }),
        do: :ok
 
-  defp extraction_shapes(_response),
-    do: {:error, Error.response_contract(:conformance_shape, %{expected: [:text, :number]})}
+  defp extraction_values(_response),
+    do: {:error, Error.response_contract(:conformance_values, %{fields: [:invoice_id, :total]})}
 
-  defp semantic_capabilities(client) do
+  defp semantic_capabilities(client, required \\ Capabilities.core()) do
     report = Client.capabilities(client)
     semantic = Map.get(report, :system_one) || Map.get(report, "system_one")
 
@@ -142,26 +139,23 @@ defmodule SystemOneSDK.Conformance do
 
     with true <- protocol == SystemOneContracts.protocol(),
          {:ok, names} <- Capabilities.normalize(advertised),
-         [] <- Capabilities.core() -- names do
+         [] <- required -- names do
       {:ok, Map.put(report, :system_one, %{protocol: protocol, capabilities: names})}
     else
       _ ->
         {:error,
          Error.response_contract(:provider_capabilities, %{
            expected_protocol: SystemOneContracts.protocol(),
-           required: Capabilities.core(),
+           required: required,
            actual: semantic
          })}
     end
   end
 
-  defp find_model(client, model, opts) do
-    with {:ok, %ListModelsResponse{models: models}} <- SystemOneSDK.list_models(client, opts) do
-      case Enum.find(models, &(&1.name == model)) do
-        nil -> {:error, Error.model_lookup(:model_not_found, model)}
-        metadata -> {:ok, metadata}
-      end
-    end
+  defp model_present(%ListModelsResponse{models: models}, model) do
+    if Enum.any?(models, &(&1.name == model)),
+      do: :ok,
+      else: {:error, Error.model_lookup(:model_not_found, model)}
   end
 
   defp answer_shapes(response) do

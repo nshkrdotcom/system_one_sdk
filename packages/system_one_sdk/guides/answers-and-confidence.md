@@ -45,10 +45,15 @@ SystemOneSDK.Response.values(response)
 
 An explicit null is a valid answer and appears as `nil`. An omitted answer,
 missing `value` key, or mismatched answer type is a response validation error.
+An explicit `valid: false` or `complete: false` from the provider also causes a
+validation error, including when the provider supplies a null value.
 Each answer preserves optional confidence and null probability. `span` contains
 the provider's offset pair as an Elixir tuple. Consult the provider for offset
 units and source text. Additional fields such as a guess or decoder status are
 available on `answer.raw`.
+
+`evaluate/4` decodes extraction values for the requested text and number fields.
+Wire-oriented `system_one/4` preserves extraction entries in `unknown_answers`.
 
 ## Relational validation
 
