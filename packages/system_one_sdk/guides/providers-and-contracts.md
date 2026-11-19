@@ -29,3 +29,14 @@ The optional `system_one_prepared/4` client-provider callback lets this bridge
 receive the exact prepared question representation, including Choice order.
 Existing providers only implementing `system_one/4` continue to work through the
 fallback path.
+
+For text and numeric extraction, an adapter supplies `text` and `number` answer
+objects with a `value` key. Use JSON null for an unanswered field. An answer may
+include `span` as an ordered pair of offsets and `confidence` and `p_null` as
+probabilities. Preserve `valid` and `complete` flags when the provider reports
+them. The adapter translates provider-specific routes and payloads.
+
+Advertise `question:text` and `question:number` on each model that supports both
+field types. `SystemOneSDK.Conformance.run(client, profile: :extraction)` checks
+the selected model's catalog entry and checks the values it extracts from a
+short invoice fixture.

@@ -1,7 +1,14 @@
 defmodule SystemOneSDK.Response do
   @moduledoc "Answer accessors and capped metadata for System One responses."
 
-  alias SystemOneSDK.{ChoiceAnswer, ListModelsResponse, NoulAnswer, ScoreAnswer, SystemOneResponse}
+  alias SystemOneSDK.{
+    ChoiceAnswer,
+    ExtractionAnswer,
+    ListModelsResponse,
+    NoulAnswer,
+    ScoreAnswer,
+    SystemOneResponse
+  }
 
   defdelegate fetch(response, id), to: SystemOneResponse
   defdelegate fetch!(response, id), to: SystemOneResponse
@@ -14,9 +21,9 @@ defmodule SystemOneSDK.Response do
   @doc """
   Project enriched answers to their primary semantic values while preserving caller keys.
 
-  Unknown future answer types are omitted because they live in `unknown_answers`, not
-  the validated `answers` map. This is a convenience projection, not a second response
-  model; use the answer structs when confidence/distributions matter.
+  Text and number extraction answers contribute their `value`, including explicit nulls.
+  Unknown future answer types stay in `unknown_answers`. Use the answer structs
+  to inspect confidence, provenance, or distributions.
   """
   @spec values(SystemOneResponse.t()) :: %{(atom() | String.t()) => term()}
   def values(%SystemOneResponse{answers: answers}) do
@@ -56,6 +63,7 @@ defmodule SystemOneSDK.Response do
   defp value(%NoulAnswer{noul: probability}), do: probability
   defp value(%ChoiceAnswer{choice: choice}), do: choice
   defp value(%ScoreAnswer{score: score}), do: score
+  defp value(%ExtractionAnswer{value: value}), do: value
 
   defp usage_metadata(nil), do: nil
 

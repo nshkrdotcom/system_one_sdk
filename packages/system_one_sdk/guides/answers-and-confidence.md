@@ -1,8 +1,7 @@
 # Answers, Distributions and Explicit Policy
 
-`SystemOneResponse` is the single public response. `evaluate` enriches the
-existing `NoulAnswer`, `ChoiceAnswer` and `ScoreAnswer`; there is no second result
-wrapper. Responses retain `raw`, `unknown_answers`, raw HTTP response, request
+`SystemOneResponse` is the public response. `evaluate` enriches Noul, Choice,
+Score and extraction answers. Responses retain `raw`, `unknown_answers`, raw HTTP response, request
 ID, model, usage, retry count and elapsed time. Semantic `elapsed_ms` includes
 local validation, Pristine execution and decoding; `runtime_elapsed_ms` retains
 Pristine's reported timing. Batch responses also carry zero-based `batch_index`.
@@ -19,7 +18,42 @@ SystemOneSDK.Response.values(response)
 
 Fetch uses exact keys, not atom/string coercion. `fetch!` lists available IDs in
 its KeyError. Raw/parity responses use strings; semantic responses preserve the
-caller key type. Every typed answer retains its own raw payload and ID. `Response.values/1` is a narrow convenience projection of the primary Noul/Choice/Score value; it omits unknown future answer types and does not replace the enriched answer structs.
+caller key type. Every typed answer retains its own raw payload and ID.
+`Response.values/1` projects the primary value of each typed answer and omits
+unknown future answer types.
+
+## Text and numeric extraction
+
+With an extraction-capable provider, pass typed field maps to `evaluate/4`.
+
+```elixir
+fields = [
+  invoice_id: %{type: "text", instructions: "Invoice identifier"},
+  total: %{type: "number", instructions: "Invoice total"},
+  po_number: %{type: "text", instructions: "Purchase order number"}
+]
+
+{:ok, response} =
+  SystemOneSDK.evaluate(client, "Invoice INV-7. Total: $0.00.", fields)
+
+SystemOneSDK.Response.values(response)
+# => %{invoice_id: "INV-7", total: 0, po_number: nil}
+
+%SystemOneSDK.ExtractionAnswer{span: span, null_probability: p_null} =
+  SystemOneSDK.Response.fetch!(response, :invoice_id)
+```
+
+An explicit null is a valid answer and appears as `nil`. An omitted answer,
+missing `value` key, or mismatched answer type is a response validation error.
+An explicit `valid: false` or `complete: false` from the provider also causes a
+validation error, including when the provider supplies a null value.
+Each answer preserves optional confidence and null probability. `span` contains
+the provider's offset pair as an Elixir tuple. Consult the provider for offset
+units and source text. Additional fields such as a guess or decoder status are
+available on `answer.raw`.
+
+`evaluate/4` decodes extraction values for the requested text and number fields.
+Wire-oriented `system_one/4` preserves extraction entries in `unknown_answers`.
 
 ## Relational validation
 
@@ -31,9 +65,9 @@ probabilities/confidence lie in [0,1]. Distribution sums must be within
 silently renormalized. Tighten to zero when your application requires exact sums
 (up to the implementation's floating-point comparison epsilon).
 
-A requested ID missing entirely is an error. An entry with an unknown future
-tag is retained/skipped, even for a known question; applications must handle a
-missing typed answer in that case. Unexpected known IDs fail. Negative or
+A requested ID missing entirely is an error. An unknown future tag is retained
+for decision or open-ended question types. Text and number extraction questions
+require a matching tag. Unexpected known IDs fail. Negative or
 noninteger usage counts fail; absent optional usage counts remain nil.
 A structural/relationally valid answer can still make an incorrect judgment.
 

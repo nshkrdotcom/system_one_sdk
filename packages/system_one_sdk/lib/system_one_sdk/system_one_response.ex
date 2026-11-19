@@ -9,7 +9,15 @@ defmodule SystemOneSDK.SystemOneResponse do
 
   require Logger
 
-  alias SystemOneSDK.{ChoiceAnswer, Error, NoulAnswer, ScoreAnswer, TransportResponse, Usage}
+  alias SystemOneSDK.{
+    ChoiceAnswer,
+    Error,
+    ExtractionAnswer,
+    NoulAnswer,
+    ScoreAnswer,
+    TransportResponse,
+    Usage
+  }
 
   @enforce_keys [:model, :usage, :answers]
   defstruct [
@@ -27,7 +35,7 @@ defmodule SystemOneSDK.SystemOneResponse do
     elapsed_ms: 0
   ]
 
-  @type answer :: NoulAnswer.t() | ChoiceAnswer.t() | ScoreAnswer.t()
+  @type answer :: NoulAnswer.t() | ChoiceAnswer.t() | ScoreAnswer.t() | ExtractionAnswer.t()
   @type t :: %__MODULE__{
           model: String.t(),
           usage: Usage.t(),
@@ -166,6 +174,10 @@ defmodule SystemOneSDK.SystemOneResponse do
 
       "score" ->
         decode_score(name, raw)
+
+      type when type in ["text", "number"] ->
+        # Extraction values are decoded against the field requested by evaluate/4.
+        {:ok, :unknown}
 
       type when is_binary(type) ->
         Logger.warning(

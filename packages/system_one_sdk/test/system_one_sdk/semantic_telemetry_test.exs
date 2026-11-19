@@ -115,6 +115,37 @@ defmodule SystemOneSDK.SemanticTelemetryTest do
     assert Test.requests(client) == []
   end
 
+  test "extraction events report confidence without extracted values or provenance", %{
+    metadata: caller
+  } do
+    client =
+      Test.client()
+      |> Test.stub_response(%{
+        "model" => "extractor-test",
+        "usage" => %{},
+        "answers" => %{
+          "secret_field" => %{
+            "type" => "text",
+            "value" => "private extraction",
+            "span" => [0, 18],
+            "confidence" => 0.8,
+            "p_null" => 0.05
+          }
+        }
+      })
+
+    assert {:ok, _response} =
+             SystemOneSDK.evaluate(client, "private extraction", [secret_field: %{type: "text"}],
+               telemetry_metadata: caller
+             )
+
+    assert_receive {[:system_one_sdk, :answer], measurements, metadata}
+    assert metadata.answer_type == :text
+    assert measurements == %{confidence: 0.8}
+    refute inspect(metadata) =~ "private extraction"
+    refute inspect(metadata) =~ "secret_field"
+  end
+
   @tag :capture_log
   test "future answers emit no answer event and known events keep Prepared order", %{
     metadata: caller
